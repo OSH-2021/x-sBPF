@@ -1,6 +1,6 @@
-# EFGFS
+# sBPF
 
-## Easier and Faster Graph File System
+## Sandbox with BPF
 
 ### Group Members
 - 陈思睿
