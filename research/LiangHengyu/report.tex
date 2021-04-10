@@ -109,7 +109,145 @@
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
+\section{BPF}
+
+\begin{itemize}
+    \item 源码在Linux源码的kernel/bpf中。阅读不同linux版本的源码可以访问
+    \url{https://elixir.bootlin.com/linux/v4.20.17/source/kernel/bpf}
+    早期版本(如4.0.9)的bpf比后期的(如5.x.x)结构简单很多，代码量差距很大。也许可以先看以前的。
+    \item Verifier：可能是BPF最复杂的部分。要拓展BPF得大量修改。
+    \item 内核态与用户态的数据交流通道：
+    用户通过bpf helpers syscalls创建bpf map。
+    bpf map有别于bpf程序在内核中的堆栈，是无限制的，存任何数据都行，
+    自由指定大小。内核态可以直接访问map，写入数据。
+    用户态需要得到map's file descriptor，间接访问。访问都需调用bpf helpers函数。
+    \item Fast Packet Processing with eBPF and XDP: 
+    Concept, Code, Challenges, and Applications 部分内容：
+    \begin{itemize}
+        \item 快速数据包处理，如控制分发操作(IoT)。
+        \item 网络路由，子节点的路径管理(InKeV)。
+        \item Container技术，将一套应用程序所需的执行环境打包起来。
+        将BPF程序放进每个Container，对每个应用程序做出更强的管理(Cilium)。
+    \end{itemize}
+    \item JVM和eBPF的结构似乎很像，核心区别可能是JVM运行在用户态而eBPF运行在内核态，
+    同时eBPF出于安全原因有更多的安全限制，
+    也许可以通过学习JVM的相关知识来理解eBPF的实现。
+    或者可以参考JVM的结构让eBPF可以执行更多的功能。
+\end{itemize}
+
 \section{沙盒}
+
+现在主流沙盒的实现方式如下（来自rVisor组结题报告）
+
+\begin{itemize}
+    \item 虚拟机：优点在于不用对软件硬件做改动，缺点在于性能较低维护较困难
+    \item unikernel：给应用带上自己的核，减小开销并且难以被攻击，
+    缺点在于需要单独设计应用
+    \item MicroVM: 把另一个剪裁过的内核暴露给应用程序，
+    安全高效且兼容性强
+    \item 进程虚拟化：
+    使用虚拟化的linux运行环境，
+    保证安全且高效（gviser的实现方法）
+\end{itemize}
+
+\subsection{seccomp}
+
+\href{https://en.wikipedia.org/wiki/Seccomp}{seccomp}介绍。
+传统seccomp可以让某个进程进入安全模式，并且阻止其调用所有除了exit()，
+sigreturn()，read()，write()外的所有对file descriptor (FD) 的调用，
+一旦发现此类调用就立即kill进程。后来引入bpf后可以更灵活的设置拦截的规则。
+
+使用它可以向内通报一个程序将要向内核发出的指令。
+如果程序发出了不在通报内的指令，它会被终结。
+一种具体使用方式是写BPF指令，关联到seccomp的函数中，
+由BPF去捕捉程序的违规操作，在内核中终结进程。
+有方法不在源代码设定通报就实现控制，基本就是个沙盒。
+这种内核中的沙盒只是利用BPF限制了系统调用，沙盒内外的程序运行环境好像没有其他区别。
+\cite{2020SandboxLinux}
+
+\subsection{Cgroups}
+
+\href{https://en.wikipedia.org/wiki/Cgroups}{Cgroups}介绍。
+
+主要支持四个功能：
+\begin{enumerate}
+    \item 限制某些groups的资源使用量(包括CPU，IO，内存等)
+    \item 调整优先级，使某些group可以分配到更多的资源
+    \item 记录某些group的资源使用量
+    \item 控制某些group的运行，具体的可以冻结，快照，重启。
+\end{enumerate}
+
+\subsection{Linux Namespace机制}
+
+Linux的Namespace机制是一种资源隔离方案。它将 Linux 的全局资源，
+划分为 namespace 范围内的资源，而且不同 namespace 间的资源彼此透明，
+不同 namespace 里的进程无法感知到其它 namespace 里面的进程和资源。
+但是namespace机制有缺陷。
+
+\begin{itemize}
+    % \item Non-namespace-aware system call interface facilitates
+    % the adversary to compromise applications running in containers 
+    % and further exploit kernel vulnerabilities to elevate privileges, 
+    % bypass access control policy enforcement, 
+    % and escape isolation mechanisms.
+    \item Non-namespace-aware system调用接口可帮助对手破坏容器中运行的应用程序，
+    并进一步利用内核漏洞来提升权限，绕过访问控制策略并逃过隔离机制。\cite{2019Practical}
+    \item 某种沙盒使用的安全方案\cite{2019Practical}：
+    用自动测试锁定一个container中程序的系统调用。
+    然后在实际运行中阻止非锁定的任何系统调用。但是锁定系统调用不算特别理想。
+    程序调用的是API，间接执行系统调用，不容易直接发现。
+    有的程序将近一半的可能系统调用都没被发掘。对于开发者来说，
+    可以加入自己的测试过程来辅助锁定。
+\end{itemize}
+
+\subsection{MBOX}
+
+在与MBOX有关的一篇论文\cite{180196}中，
+详细介绍了此沙盒面对的使用场景与其解决方案，
+此沙盒使用了上文提到的seccomp-bpf作为工具增强其安全性。
+
+MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进行保护。
+
+\begin{itemize}
+    \item 面对的使用场景如下：
+    \begin{enumerate}
+        \item 为非管理员用户构造虚拟的root权限，
+        vlab提供的fakeroot即为此类应用。
+        \item 安全地运行不可信的二进制文件。
+        \item 为文件系统提供检查点（check point)。
+        当用户需要处理危险的文件的时候，
+        传统上一旦文件出现错误就需要使用专用工具修复文件系统。
+        使用MBOX则可以在开始处理前把运行环境转移到虚拟的文件系统中，
+        这样在发生错误后可以提取sandbox中剩余的错误信息，
+        并且可以正常的时候原理的文件系统，
+        如果运行成功了也可以直接把sandbox的系统与原文件系统合并（听起来很像git）。
+        \item 使用MBOX，用户可以简单的构建开发环境。
+        \item 细化权限管理：通用os如linux中用户建立的进程有权限访问用户的所有个人文件，
+        使用MBOX可以使用户进程只能访问有必要的文件，保护了用户的其他文件。
+    \end{enumerate}
+    \item 其大致上的实现原理如下：
+    \begin{enumerate}
+        \item 给文件系统增加了一个private layer，位于原生文件系统的上层，
+        每个sandbox会对应生成一个MBOX文件系统，用于服务沙盒中的进程。
+        此文件系统的储存结构从原生文件系统的角度来看只是普通的目录，
+        但是沙盒中的程序必须通过MBOX获得服务。
+        \item 虚拟文件系统中的文件变动不会实时更新到host文件系统，
+        但是host文件系统中的变动可以反映在虚拟文件系统中，
+        当两个系统出现冲突的时候请求用户决定保留哪一个版本。
+        \item 使用了\textbf{seccomp-bpf}和
+        \textbf{ptrace} (这个可能还要再查是怎么回事) 
+        干预系统调用并且实现fakeroot。具体的，其作为过滤器来干预沙盒中进程的syscall，
+        如限制某进程对socket的调用。
+        \item 其对sefccomp-bpf的使用与我们的设想相同，
+        将每个syscall的进入调用挂在某个bpf程序上，
+        bpf程序接受syscall的类型，进程的属性等信息，计算是否有相应权限。
+    \end{enumerate}
+    \item 在论文的4.2节中涉及了这个课题组在使用ptrace和seccomp-bpf时规避了哪些问题，
+    具体的细节日后再进行了解。
+    \item 文章的参考文献部分提到了seccomp-bpf的原始论文\cite{DynSec}，
+    但是似乎链接已经死了，由于此成果是2012年的，
+    故不太可能基于ebpf结构，因此使用ebpf重新实现此功能仍然可行。
+\end{itemize}
 
 \subsection{gVisor}
 
@@ -126,12 +264,76 @@
     其本身的内核bug容易成为被攻击的目标 
     (详细分析见此文\href{https://opensource.com/business/14/7/docker-security-selinux}
     {Are Docker containers really secure?}\cite{DanielJDocker}) 
-    (此文章主要分析在下面单独写了)
+    (此文章主要分析见下文)。
+    \item gviser的性能非常差，打开关闭文件比传统容器慢了216倍，
+    其他操作也普遍慢了很多（2倍到11倍）。
+    \item gVisor支持OCI(Open Container Initiative)，
+    因此docker用户可以自己配置使用默认引擎，runc或者gvisor作为runtime engine。
+    \item gVisor结构如下 guestApp-Sentry( VMM+guestOS(linux) )-hostOS，
+    多层结构确保程序难以同时攻克每一层的安全缺陷，损害hostOS的安全。
+    sentry提供两种工作模式，第一种模式中其追踪并且翻译gusetAPP的系统调用，
+    第二种模式中其更像是虚拟机中工作的guestOS，直接服务guestAPP。
+    \item gVisor为guestAPP提供了211个syscall(标准linux提供了319种)，
+    gVisor只需要向hostOS请求55种syscall，
+    这些syscall的种类都是通过seccomp技术限制和约束的，
+    当sentry被guestAPP劫持并且申请了超出允许范围的syscall时，
+    seccomp过滤器会把gVisor杀死从而确保hostOS的安全。
+    诸如OPEN和SOCKET这样的操作被设计者认为是极端危险的，
+    因此没有被列入许可的syscall，这两个功能是通过复杂的结构设计出来的，
+    从而保证可以在不调用hostOS的对应syscall的前提下安全的为guestAPP提供服务。
+    这就是为什么gVisor的文件性能如此差。
+    \item gVisor对文件服务的实现：
+    \begin{itemize}
+        \item sentry搞了若干个不同的内置文件系统来尽可能满足guestAPP的请求。
+        \item 当不得不去读取hostOS文件系统时，他调用Gofer来替他进行文件访问，
+        访问结果（文件句柄）通过一个p9Channel返回给sentry（进程间通讯），
+        所以非常慢但是很安全。
+        \item sentry得到句柄后需要进行用户态到内核态的转化和上下文切换才能进行读取。
+    \end{itemize}
+    
+    \item 本文后面包含了如何对此类容器进行性能测试，之后可以再继续深入了解。
 \end{enumerate}
 
 \section{虚拟化技术}
 
+\begin{itemize}
+    \item 完全虚拟化的主要思想：虚拟机筛选guestOS试图运行的指令，
+    普通指令允许他直接在CPU上运行，
+    危险指令（如读写时钟或中断寄存器）
+    被虚拟机管理器截获并且通过模拟的方式返回给gusetOS。
+    \item hypervisor模型：主机运行的OS直接负责执行虚拟化，
+    VMM同时负责管理虚拟机和管理系统硬件
+    \item host OS模型：VMM作为通用OS的一个模块被加载，
+    VMM通过请求系统调用来满足虚拟机的请求，VMM在OS来看类似于一个进程。
+    随着linux的虚拟化功能越来越多，他正在从Host模型发展为Hypervisor模型。
+    \item 混合模型：VMM作为最底层调度硬件，
+    但是额外运行了一个虚拟的操作系统用来做为IO的适配软件，
+    优点在于减轻了VMM的开发难度，缺点在于guestOS的请求需要多次转发才能得到满足。
+\end{itemize}
+
 \section{计算引擎}
+
+\begin{itemize}
+    \item 类似于游戏引擎，计算引擎将复杂的底层代码完备的实现好，
+    让开发者可以专注于实际的计算部分。以热门大数据计算引擎Flink为例，
+    Flink将数据输入系统 数据处理系统 数据输出系统，分别抽象出来提供了完备的框架，
+    开发者只需要给框架附加上最重要的核心计算代码，
+    就可以简单的实现一个高效的数据处理系统，并且可以简单的部署到各种计算集群上。
+    \item 计算引擎的核心发展在于分布式技术和基于数据流的实时化，
+    值得参考的主流框架是Spark，Flink和Ray。
+\end{itemize}
+
+现有的计算引擎有：
+
+\begin{itemize}
+    \item \href{https://zh.m.wikipedia.org/wiki/Google%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E}{谷歌计算引擎}
+    ——云计算服务。重点在于云端计算，不是特化的计算工具库，偏服务性质。
+    \item \href{https://zh.m.wikipedia.org/wiki/Google%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E}{matlab引擎}。
+    这个链接介绍了了适用于C的API（用于操纵matlab程序）。
+    matlab显然是一个计算引擎。就像游戏引擎提供了侦测、渲染等预制工具，
+    matlab提供了积分、矩阵乘法等计算接口。
+    \item math.h，STL在某种程度上也可以是计算引擎。
+\end{itemize}
 
 \bibliography{../paper.bib}
 \bibliographystyle{ieeetr}
