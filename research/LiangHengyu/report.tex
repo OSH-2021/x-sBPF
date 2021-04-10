@@ -1,0 +1,139 @@
+\documentclass[AutoFakeBold,a4paper]{ctexart}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{ctex}
+\usepackage{xeCJK}
+\usepackage{fontspec}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{color, xcolor}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsthm,txfonts}
+\usepackage{amssymb}
+%\usepackage{euler}
+\usepackage{fancyhdr}
+\usepackage[colorlinks,linkcolor=magenta,citecolor=magenta]{hyperref}
+\usepackage{multicol}
+\usepackage{titletoc}
+\usepackage[biblabel]{cite}
+\usepackage[left=1.25in,right=1.25in,top=1in,bottom=1in]{geometry}
+
+\renewcommand\lstlistingname{代码}
+%\setCJKmainfont{微软雅黑}[BoldFont=SimHei, ItalicFont=KaiTi]
+
+\pagestyle{fancy}
+
+\fancyhead[RO, RE]{\thepage}
+\fancyhead[LO, LE]{\kaishu \leftmark}
+\fancyhead[CO, CE]{}
+
+\fancyfoot[RO, RE]{}%lhy1210302421@mail.ustc.edu.cn}
+\fancyfoot[LO, LE]{{\kaishu \today}}
+\fancyfoot[CO, CE]{}
+
+\setmainfont[Ligatures=TeX]{CMU Serif}
+\setsansfont[Ligatures=TeX]{CMU Sans Serif}
+\setmonofont[Mapping=]{CMU Typewriter Text}
+
+\setCJKmainfont{PingFangSC-Regular}[BoldFont=PingFangSC-Medium]
+
+\renewcommand{\headrulewidth}{0.1mm} 
+\renewcommand{\footrulewidth}{0.1mm}
+
+\lstset{
+    basicstyle          =   \sffamily,          % 基本代码风格
+    keywordstyle        =   \bfseries,          % 关键字风格
+    commentstyle        =   \rmfamily\itshape,  % 注释的风格，斜体
+    stringstyle         =   \ttfamily,  % 字符串风格
+    flexiblecolumns,                % 别问为什么，加上这个
+    numbers             =   left,   % 行号的位置在左边
+    showspaces          =   false,  % 是否显示空格，显示了有点乱，所以不现实了
+    numberstyle         =   \zihao{-5}\ttfamily,    % 行号的样式，小五号，tt等宽字体
+    showstringspaces    =   false,
+    captionpos          =   t,      % 这段代码的名字所呈现的位置，t指的是top上面
+    frame               =   lrtb,   % 显示边框
+    captionpos          =   b       % caption的位置（填t在上，填b在底部）
+}
+
+\lstdefinestyle{Python}{
+    language        =   Python, % 语言选Python
+    basicstyle      =   \zihao{-5}\ttfamily,
+    numberstyle     =   \zihao{-5}\ttfamily,
+    keywordstyle    =   \color{blue},
+    keywordstyle    =   [2] \color{teal},
+    stringstyle     =   \color{magenta},
+    commentstyle    =   \color[rgb]{0.416,0.6,0.3333}\ttfamily,
+    breaklines      =   true,   % 自动换行，建议不要写太长的行
+    columns         =   fixed,  % 如果不加这一句，字间距就不固定，很丑，必须加
+    basewidth       =   0.5em,
+}
+
+\providecommand{\keywords}[1]{\textbf{\textit{关键字：}} #1}
+
+\renewcommand{\abstractname}{\textbf{摘要：}}
+
+\begin{document}
+
+\title{\textbf{\Huge 大作业-调研报告}}
+
+\author{陈思睿 \quad 梁恒宇 \quad 吕泓涛 \quad 汤力宇\\
+中国科学技术大学 \quad 安徽合肥}
+
+\date{\today}
+
+\maketitle
+
+\ctexset { section = { format={\Large \bfseries} } }
+\ctexset { subsection = { format={\large \bfseries} } }
+
+\titlecontents{section}[2em]{\addvspace{1.3mm}\bf}{%
+\contentslabel{2.0em}}{}{\titlerule*[5pt]{$\cdot$}\contentspage}
+
+\titlecontents{subsection}[4.2em]{}{\contentslabel{2.5em}}{}{%
+\titlerule*[5pt]{$\cdot$}\contentspage}
+
+\titlecontents{subsubsection}[7.2em]{}{\contentslabel{3.3em}}{}{%
+\titlerule*[5pt]{$\cdot$}\contentspage}
+
+\textbf{摘要：}
+
+\begin{keywords}
+    
+\end{keywords}
+
+\pagenumbering{roman}
+\tableofcontents
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{沙盒}
+
+\subsection{gVisor}
+
+\subsubsection{gVisor的结构与问题}
+
+根据一篇论文\cite{234857}，
+概括的来说，文章提出来了如下观点：
+
+\begin{enumerate}
+    \item 传统来说，hyperviser模式的虚拟化容器有着更好的安全性，
+    但是难以保证性能。hostOS结构的容器(如docker)
+    的性能更好可能是由于其运行的若干的虚拟机通过一个统一的完善的通用OS来调度各类资源。
+    但是由于hostOS结构中hostOS本身没有运行在容器中，
+    其本身的内核bug容易成为被攻击的目标 
+    (详细分析见此文\href{https://opensource.com/business/14/7/docker-security-selinux}
+    {Are Docker containers really secure?}\cite{DanielJDocker}) 
+    (此文章主要分析在下面单独写了)
+\end{enumerate}
+
+\section{虚拟化技术}
+
+\section{计算引擎}
+
+\bibliography{../paper.bib}
+\bibliographystyle{ieeetr}
+
+\end{document}
