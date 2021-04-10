@@ -70,7 +70,36 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
   可以包括若干进程，共享namespace下的资源，每份资源也可以重复出现在多个namespace下(具体内容需要再研究)
 
 - JVM和eBPF的结构似乎很像，核心区别可能是JVM运行在用户态而eBPF运行在内核态，同时eBPF出于安全原因有更多的安全限制，也许可以通过学习JVM的相关知识来理解eBPF的实现。或者可以参考JVM的结构让eBPF可以执行更多的功能。
-- 
+  
+# 4月9日
+
+- 需要研究gviser的结构和问题     
+
+  gviser的性能分析[ The True Cost of Containing: A gVisor Case Study](https://www.usenix.org/system/files/hotcloud19-paper-young.pdf)  
+  概括的来说，文章提出来了如下观点：
+  - 传统来说，hyperviser模式的虚拟化容器有着更好的安全性，但是难以保证性能。hostOS结构的容器(如docker)的性能更好可能是由于其运行的若干的虚拟机通过一个统一的完善的通用OS来调度各类资源。但是由于hostOS结构中hostOS本身没有运行在容器中，其本身的内核bug容易成为被攻击的目标 (详细分析见此文[Are Docker containers really secure?](https://opensource.com/business/14/7/docker-security-selinux)) (此文章主要分析在下面单独写了)
+  - gviser的性能非常差，打开关闭文件比传统容器慢了216倍，其他操作也普遍慢了很多（2倍到11倍）
+  - gVisor支持OCI(Open Container Initiative),因此docker用户可以自己配置使用默认引擎，runc或者gvisor作为runtime engine
+  - gVisor结构如下 guestApp-Sentry( VMM+guestOS(linux) )-hostOS,多层结构确保程序难以同时攻克每一层的安全缺陷，损害hostOS的安全。 sentry提供两种工作模式，第一种模式中其追踪并且翻译gusetAPP的系统调用，第二种模式中其更像是虚拟机中工作的guestOS，直接服务guestAPP
+  - gVisor为guestAPP提供了211个syscall(标准linux提供了319种)，gVisor只需要向hostOS请求55种syscall，这些syscall的种类都是通过seccomp技术限制和约束的，当sentry被guestAPP劫持并且申请了超出允许范围的syscall时，seccomp过滤器会把gVisor杀死从而确保hostOS的安全。诸如OPEN和SOCKET这样的操作被设计者认为是极端危险的，因此没有被列入许可的syscall，这两个功能是通过复杂的结构设计出来的，从而保证可以在不调用hostOS的对应syscall的前提下安全的为guestAPP提供服务。**这就是为什么gVisor的文件性能如此差**
+  - gVisor对文件服务的实现：  
+  sentry搞了若干个不同的内置文件系统来尽可能满足guestAPP的请求  
+  当不得不去读取hostOS文件系统时，他调用Gofer来替他进行文件访问，访问结果（文件句柄）通过一个p9Channel返回给sentry（进程间通讯），所以非常慢但是很安全。  
+  sentry得到句柄后需要进行用户态到内核态的转化和上下文切换才能进行读取。
+  - 本文后面包含了如何对此类容器进行性能测试，回头可以再看。
+  
+  
+    
+
+
+- [Are Docker containers really secure?](https://opensource.com/business/14/7/docker-security-selinux)的笔记。
+  - " Currently, Docker uses five namespaces to alter processes view of the system: Process, Network, Mount, Hostname, Shared Memory."  
+  linux中的namespace到底是什么样的概念，docker是如何使用这五个namespace的？
+  - 文章中提到了说linux中很多组件是没有结合namespace的，然后其上运行的容器为了运行这些组件，将会有必要获得在hostOS中获得一定的权限，此类权限范围很广因此存在很多潜在的可攻击点。
+
+
+- 需要研究docker的基本结构
+- 需要研究hyperviser模型和hostOS模型的虚拟化各自的性能缺陷
 
 
 
