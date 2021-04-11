@@ -1,0 +1,71 @@
+	bcc即BPF Compiler Collection
+一个能高效编写内核追踪和管理程序的工具包。它是主要的BPF前端项目。用户能够为BPF编写C程序，或Python,lua，由BCC转化成BPF应用（借由LLVM生成字节码），是一种动态编译的方式。
+https://github.com/iovisor/bcc
+书籍:BPF Performance Tools by Brendan Gregg
+
+	bpftrace
+构建于BPF和bcc之上的追踪工具。动态监测工具，同样用于与BPF进行交流。用户使用单行命令或编写程序获取目标进程的行为，或记录过程。
+https://github.com/iovisor/bpftrace
+
+	libbpf
+libbpf目标是为了使得bpf程序像其它程序一样，编译好后，可以放在任何一台机器，任何一个kernel版本上运行。使用libbpf可以像编写普通用户态程序一样开发BPF程序，比BCC更精简快速。
+背景：有些BPF程序不需要获取内核数据结构，只是捕获系统调用，但是它们比较稀有；BPF提供了一些稳定接口，让部分结构具有统一性，但是十分有限。为了对付具有很强动态性的语境，BCC采用动态编译，但是为此付出了不简洁、存在错误率的代价。
+使用内核的BTF(BPF Type Format)信息可以实现结构定位，并且用它成功生成了一个巨大的头文件vmlinux.h，这个文件代替了特化的内核版本头文件，让程序具有到处运行的可能。
+在某些泛用条件下,BCC程序可以转化为libbpf程序。
+https://www.cnblogs.com/charlieroro/p/14206214.htm，
+https://facebookmicrosites.github.io/bpf/blog/2020/02/19/bpf-portability-and-co-re.html
+
+	Falco
+应用反常行为监视工具，。能持续性监视和侦测容器、应用、远程计算机、网络的行为，比如namespace的切换，敏感读写，执行shell。
+组成:1、Userspace program，用户与Falco交流的命令行界面。2、Configuration，控制Falco的运作机制。3、Driver，一个获取系统调用并返回给用户态的工具，其中一个选择就是eBPF probe。
+https://github.com/falcosecurity/falco
+https://falco.org/docs/
+
+	Katran
+一个C++库/BPF程序，能够搭建高性能的layer 4负载均衡器。利用了XDP和BPF提供内核中的工具来进行快速包处理。Katran部署在Facebook的后端服务器上，它帮助Facebook提高了网络负载均衡的性能和可扩展性。
+XDP是一个内核组成，能进行快速包处理。
+https://github.com/facebookincubator/katran
+
+	Hbble
+分布式网络安全保障和观测平台。构建于Cilium和BPF之上，能够深入获取信息，比如网络服务的交流频率，哪些网络服务被阻挡或者被服务集群外部访问，而借由BPF工具这些观测的开销很小。
+https://github.com/cilium/hubble
+
+	tracee
+实时的系统和应用追踪工具，能够分析、收集事件来探测可疑行为。它作为一个docker镜像来运作。使用go语言。
+其组成部分Tracee-eBPF用于事件收集。而libbpgo是一个帮助go编写BPF程序的库，使用了libbpf。
+https://aquasecurity.github.io/tracee/dev/
+
+一些Fast Packet Processing with eBPF and XDP……那本书讲例子时提到的文章：
+
+https://ieeexplore.ieee.org/document/7483106
+@INPROCEEDINGS{7483106,
+  author={S. {Jouet} and R. {Cziva} and D. P. {Pezaros}},
+  booktitle={2015 IEEE 16th International Conference on High Performance Switching and Routing (HPSR)}, 
+  title={Arbitrary packet matching in OpenFlow}, 
+  year={2015},
+  volume={},
+  number={},
+  pages={1-6},
+  doi={10.1109/HPSR.2015.7483106}}
+
+https://ieeexplore.ieee.org/document/8407006
+@INPROCEEDINGS{8407006,  author={S. {Baidya} and Y. {Chen} and M. {Levorato}},  booktitle={IEEE INFOCOM 2018 - IEEE Conference on Computer Communications Workshops (INFOCOM WKSHPS)},   title={eBPF-based content and computation-aware communication for real-time edge computing},   year={2018},  volume={},  number={},  pages={865-870},  doi={10.1109/INFCOMW.2018.8407006}}
+
+https://dl.acm.org/doi/10.1145/3234200.3234228
+@inproceedings{10.1145/3234200.3234228,
+author = {Bertrone, Matteo and Miano, Sebastiano and Risso, Fulvio and Tumolo, Massimo},
+title = {Accelerating Linux Security with EBPF Iptables},
+year = {2018},
+isbn = {9781450359153},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3234200.3234228},
+doi = {10.1145/3234200.3234228},
+booktitle = {Proceedings of the ACM SIGCOMM 2018 Conference on Posters and Demos},
+pages = {108–110},
+numpages = {3},
+keywords = {iptables, eBPF, Linux, XDP},
+location = {Budapest, Hungary},
+series = {SIGCOMM '18}
+}
+}
