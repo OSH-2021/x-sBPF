@@ -70,9 +70,9 @@
     basewidth       =   0.5em,
 }
 
-\providecommand{\keywords}[1]{\textbf{\textit{关键字：}} #1}
+% \providecommand{\keywords}[1]{\textbf{\textit{关键字：}} #1}
 
-\renewcommand{\abstractname}{\textbf{摘要：}}
+% \renewcommand{\abstractname}{\textbf{摘要：}}
 
 \begin{document}
 
@@ -97,11 +97,11 @@
 \titlecontents{subsubsection}[7.2em]{}{\contentslabel{3.3em}}{}{%
 \titlerule*[5pt]{$\cdot$}\contentspage}
 
-\textbf{摘要：}
+% \textbf{摘要：}
 
-\begin{keywords}
+% \begin{keywords}
     
-\end{keywords}
+% \end{keywords}
 
 \pagenumbering{roman}
 \tableofcontents
@@ -109,7 +109,15 @@
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-\section{BPF}
+\section{小组成员}
+
+\section{项目简介}
+
+\section{项目背景}
+
+% 结构、安全、性能分析
+
+\subsection{BPF}
 
 \begin{itemize}
     \item 源码在Linux源码的kernel/bpf中。阅读不同linux版本的源码可以访问
@@ -133,9 +141,27 @@
     同时eBPF出于安全原因有更多的安全限制，
     也许可以通过学习JVM的相关知识来理解eBPF的实现。
     或者可以参考JVM的结构让eBPF可以执行更多的功能。
+    %\item 
 \end{itemize}
 
-\section{沙盒}
+\subsection{虚拟化技术}
+
+\begin{itemize}
+    \item 完全虚拟化的主要思想：虚拟机筛选guestOS试图运行的指令，
+    普通指令允许他直接在CPU上运行，
+    危险指令（如读写时钟或中断寄存器）
+    被虚拟机管理器截获并且通过模拟的方式返回给gusetOS。
+    \item hypervisor模型：主机运行的OS直接负责执行虚拟化，
+    VMM同时负责管理虚拟机和管理系统硬件
+    \item host OS模型：VMM作为通用OS的一个模块被加载，
+    VMM通过请求系统调用来满足虚拟机的请求，VMM在OS来看类似于一个进程。
+    随着linux的虚拟化功能越来越多，他正在从Host模型发展为Hypervisor模型。
+    \item 混合模型：VMM作为最底层调度硬件，
+    但是额外运行了一个虚拟的操作系统用来做为IO的适配软件，
+    优点在于减轻了VMM的开发难度，缺点在于guestOS的请求需要多次转发才能得到满足。
+\end{itemize}
+
+\subsection{沙盒}
 
 现在主流沙盒的实现方式如下（来自rVisor组结题报告）
 
@@ -150,7 +176,7 @@
     保证安全且高效（gviser的实现方法）
 \end{itemize}
 
-\subsection{seccomp}
+\subsubsection{seccomp}
 
 \href{https://en.wikipedia.org/wiki/Seccomp}{seccomp}介绍。
 传统seccomp可以让某个进程进入安全模式，并且阻止其调用所有除了exit()，
@@ -165,7 +191,7 @@ sigreturn()，read()，write()外的所有对file descriptor (FD) 的调用，
 这种内核中的沙盒只是利用BPF限制了系统调用，沙盒内外的程序运行环境好像没有其他区别。
 \cite{2020SandboxLinux}
 
-\subsection{Cgroups}
+\subsubsection{Cgroups}
 
 \href{https://en.wikipedia.org/wiki/Cgroups}{Cgroups}介绍。
 
@@ -177,7 +203,7 @@ sigreturn()，read()，write()外的所有对file descriptor (FD) 的调用，
     \item 控制某些group的运行，具体的可以冻结，快照，重启。
 \end{enumerate}
 
-\subsection{Linux Namespace机制}
+\subsubsection{Linux Namespace机制}
 
 Linux的Namespace机制是一种资源隔离方案。它将 Linux 的全局资源，
 划分为 namespace 范围内的资源，而且不同 namespace 间的资源彼此透明，
@@ -200,7 +226,7 @@ Linux的Namespace机制是一种资源隔离方案。它将 Linux 的全局资�
     可以加入自己的测试过程来辅助锁定。
 \end{itemize}
 
-\subsection{MBOX}
+\subsubsection{MBOX}
 
 在与MBOX有关的一篇论文\cite{180196}中，
 详细介绍了此沙盒面对的使用场景与其解决方案，
@@ -249,9 +275,9 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
     故不太可能基于ebpf结构，因此使用ebpf重新实现此功能仍然可行。
 \end{itemize}
 
-\subsection{gVisor}
+\subsubsection{gVisor}
 
-\subsubsection{gVisor的结构与问题}
+\paragraph{gVisor的结构与问题}
 
 根据一篇论文\cite{234857}，
 概括的来说，文章提出来了如下观点：
@@ -292,48 +318,21 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
     \end{itemize}
     
     \item 本文后面包含了如何对此类容器进行性能测试，之后可以再继续深入了解。
+    %\item 其他进程如何实现劫持沙盒管理程序的权限（如open函数），或许能体现BPF的优势，
+    % 需要调研现有安全漏洞的形式。
 \end{enumerate}
 
-\section{虚拟化技术}
+\subsection{容器}
 
-\begin{itemize}
-    \item 完全虚拟化的主要思想：虚拟机筛选guestOS试图运行的指令，
-    普通指令允许他直接在CPU上运行，
-    危险指令（如读写时钟或中断寄存器）
-    被虚拟机管理器截获并且通过模拟的方式返回给gusetOS。
-    \item hypervisor模型：主机运行的OS直接负责执行虚拟化，
-    VMM同时负责管理虚拟机和管理系统硬件
-    \item host OS模型：VMM作为通用OS的一个模块被加载，
-    VMM通过请求系统调用来满足虚拟机的请求，VMM在OS来看类似于一个进程。
-    随着linux的虚拟化功能越来越多，他正在从Host模型发展为Hypervisor模型。
-    \item 混合模型：VMM作为最底层调度硬件，
-    但是额外运行了一个虚拟的操作系统用来做为IO的适配软件，
-    优点在于减轻了VMM的开发难度，缺点在于guestOS的请求需要多次转发才能得到满足。
-\end{itemize}
+\subsubsection{Docker}
 
-\section{计算引擎}
+% Docker调研
 
-\begin{itemize}
-    \item 类似于游戏引擎，计算引擎将复杂的底层代码完备的实现好，
-    让开发者可以专注于实际的计算部分。以热门大数据计算引擎Flink为例，
-    Flink将数据输入系统 数据处理系统 数据输出系统，分别抽象出来提供了完备的框架，
-    开发者只需要给框架附加上最重要的核心计算代码，
-    就可以简单的实现一个高效的数据处理系统，并且可以简单的部署到各种计算集群上。
-    \item 计算引擎的核心发展在于分布式技术和基于数据流的实时化，
-    值得参考的主流框架是Spark，Flink和Ray。
-\end{itemize}
+\section{立项依据}
 
-现有的计算引擎有：
+\section{项目重要性}
 
-\begin{itemize}
-    \item \href{https://zh.m.wikipedia.org/wiki/Google%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E}{谷歌计算引擎}
-    ——云计算服务。重点在于云端计算，不是特化的计算工具库，偏服务性质。
-    \item \href{https://zh.m.wikipedia.org/wiki/Google%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E}{matlab引擎}。
-    这个链接介绍了了适用于C的API（用于操纵matlab程序）。
-    matlab显然是一个计算引擎。就像游戏引擎提供了侦测、渲染等预制工具，
-    matlab提供了积分、矩阵乘法等计算接口。
-    \item math.h，STL在某种程度上也可以是计算引擎。
-\end{itemize}
+\section{小组相关工作}
 
 \bibliography{../paper.bib}
 \bibliographystyle{ieeetr}
