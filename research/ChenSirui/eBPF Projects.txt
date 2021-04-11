@@ -37,6 +37,7 @@ https://aquasecurity.github.io/tracee/dev/
 
 一些Fast Packet Processing with eBPF and XDP……那本书讲例子时提到的文章：
 
+OpenFlow是layer 2的网络通信协议。使用BPF对网包做归类，能够提供灵活的匹配机制，优于OpenFlow采用的在不断拓展的固定匹配字段。一个复杂的BPF程序实现了一个端口速度（line-rate）的任意网包归类。
 https://ieeexplore.ieee.org/document/7483106
 @INPROCEEDINGS{7483106,
   author={S. {Jouet} and R. {Cziva} and D. P. {Pezaros}},
@@ -48,9 +49,12 @@ https://ieeexplore.ieee.org/document/7483106
   pages={1-6},
   doi={10.1109/HPSR.2015.7483106}}
 
+采用BPF程序控制网包分配操作。每个特定的关于网络交通流和网包复制的计算流程被一个内核中的虚拟机控制。通过分配实时分析工作给多个边缘处理器，解决了网络带宽限制的问题。
 https://ieeexplore.ieee.org/document/8407006
 @INPROCEEDINGS{8407006,  author={S. {Baidya} and Y. {Chen} and M. {Levorato}},  booktitle={IEEE INFOCOM 2018 - IEEE Conference on Computer Communications Workshops (INFOCOM WKSHPS)},   title={eBPF-based content and computation-aware communication for real-time edge computing},   year={2018},  volume={},  number={},  pages={865-870},  doi={10.1109/INFCOMW.2018.8407006}}
 
+
+传统linux系统的安全特性集中于iptables。由于网速的提高和代码量的暴增，传统实现方案逐渐力不从心。而BPF提供了在网包接收或发送是执行几乎任意特定代码的优势，能够实现Over-the-Air updates.采用BPF制作的iptables教传统方法具有更为优越的性能。
 https://dl.acm.org/doi/10.1145/3234200.3234228
 @inproceedings{10.1145/3234200.3234228,
 author = {Bertrone, Matteo and Miano, Sebastiano and Risso, Fulvio and Tumolo, Massimo},
