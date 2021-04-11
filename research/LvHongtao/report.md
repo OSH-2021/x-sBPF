@@ -102,7 +102,9 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 - 需要研究hyperviser模型和hostOS模型的虚拟化各自的性能缺陷
 
 
-
+# 4月10日
+- 有关eBPF详细概念的paper(文章链接)[https://www.researchgate.net/profile/Marcos-Vieira/publication/339084847_Fast_Packet_Processing_with_eBPF_and_XDP_Concepts_Code_Challenges_and_Applications/links/5e4145f592851c7f7f2c28eb/Fast-Packet-Processing-with-eBPF-and-XDP-Concepts-Code-Challenges-and-Applications.pdf]  
+  
 
 
 
