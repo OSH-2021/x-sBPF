@@ -111,6 +111,13 @@
 
 \section{小组成员}
 
+\begin{itemize}
+    \item 陈思睿
+    \item 梁恒宇
+    \item 吕泓涛
+    \item 汤力宇
+\end{itemize}
+
 \section{项目简介}
 
 \section{项目背景}
@@ -124,9 +131,12 @@
 
 \begin{itemize}
     %%%%%%%%%%%%%%%% 给下面这段配个图 pic_1.jpg %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    \item eBPF的运行原理如下： 
-    % 引用 Fast Packet Processing with eBPF and XDP: Concepts, Code, Challenges, and Applications
-    % https://www.researchgate.net/profile/Marcos-Vieira/publication/339084847_Fast_Packet_Processing_with_eBPF_and_XDP_Concepts_Code_Challenges_and_Applications/links/5e4145f592851c7f7f2c28eb/Fast-Packet-Processing-with-eBPF-and-XDP-Concepts-Code-Challenges-and-Applications.pdf
+    \item eBPF的运行原理如下\cite{vieira2020fast}：
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\columnwidth]{../LvHongtao/pic_1.jpg}
+        \caption{eBPF运行原理示意图}
+    \end{figure}
     \begin{enumerate}
         \item eBPF的程序可以直接通过C语言或RUST语言编写，
         经过专用的编译器编译成BPF字节码（bytecode）并提交给Verifier审核
@@ -200,7 +210,7 @@
         \item 完全虚拟化：虚拟机管理器将虚拟整个OS以满足任意软件的运行需求。
         一般的，其截获并筛选guestOS将要运行的指令，
         相对安全的指令将被提交给物理CPU直接运行，相对危险的指令（如修改系统时钟或修改中断寄存器）
-        将被虚拟机管理器截获并且通过模拟运行结果的方式返回给gusetOS。\\
+        将被虚拟机管理器截获并且通过模拟运行结果的方式返回给guestOS。\\
         熟知的例子包括：QEMU、VMware等
         \item 部分虚拟化：虚拟机只针对特定应用程序进行虚拟，而不是虚拟整个操作系统。
         \item hypervisor模型：主机运行的OS直接负责执行虚拟化，VMM同时负责管理虚拟机和管理系统硬件
@@ -239,6 +249,7 @@
 沙盒中的所有改动对操作系统不会造成任何损失。
 通常，这种技术被计算机技术人员广泛用于测试可能带毒的程序或是其他的恶意代码。（wiki）
 
+\begin{enumerate}
 
 \item 传统上为了实现沙盒可以使用如下的若干种方式
 \begin{itemize}
@@ -308,6 +319,8 @@
 
 \end{itemize}
 
+\end{enumerate}
+
 
 
 
@@ -347,7 +360,7 @@
 
 
 
-\subsubsection{MBOX}
+\subsection{MBOX}
 MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进行保护。\\
 
 在与MBOX有关的一篇论文\cite{180196}中，
@@ -391,7 +404,7 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
     
 \end{itemize}
 
-\subsubsection{gVisor}
+\subsection{gVisor}
 gVisor 是一款新型沙箱解决方案，其能够为容器提供安全的隔离措施，
 同时继续保持远优于虚拟机的轻量化特性。gVisor能够与Docker及Kubernetes实现集成，
 从而在生产环境中更轻松地建立起沙箱化容器系统。
@@ -402,7 +415,7 @@ gVisor的核心为一套运行非特权普通进程的内核，且支持大多�
 与在虚拟机当中一样，gVisor沙箱中运行的应用程序也将获得自己的内核与一组虚拟设备
 ——这一点与主机及其它沙箱方案有所区别。（gVisor主页）
 
-\paragraph{gVisor的结构与问题}
+\subsubsection{gVisor的结构与问题}
 
 论文\cite{234857}提出来了如下观点：
 
