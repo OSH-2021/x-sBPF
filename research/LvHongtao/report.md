@@ -103,10 +103,30 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 
 
 # 4月10日
-- 有关eBPF详细概念的paper(文章链接)[https://www.researchgate.net/profile/Marcos-Vieira/publication/339084847_Fast_Packet_Processing_with_eBPF_and_XDP_Concepts_Code_Challenges_and_Applications/links/5e4145f592851c7f7f2c28eb/Fast-Packet-Processing-with-eBPF-and-XDP-Concepts-Code-Challenges-and-Applications.pdf]  
+- 有关eBPF详细概念的paper [文章链接](https://www.researchgate.net/profile/Marcos-Vieira/publication/339084847_Fast_Packet_Processing_with_eBPF_and_XDP_Concepts_Code_Challenges_and_Applications/links/5e4145f592851c7f7f2c28eb/Fast-Packet-Processing-with-eBPF-and-XDP-Concepts-Code-Challenges-and-Applications.pdf)  
   
 
 
+
+
+# 4月13日
+- 有关恶意进程的常见行为分析  
+  - [安全相关的文章分享站](https://paper.seebug.org/)
+  
+  - 知名恶意程序 beacon，Zeus、Asprox
+  -  [360写的zenus变种木马分析](https://www.freebuf.com/articles/paper/171820.html) 推荐看看
+  - [一个zeus变种木马的结构和功能分析 ](https://cloud.tencent.com/developer/article/1036506)  
+  - 此木马功能非常丰富，包括使用VNC远程桌面控制电脑，截屏并发送，读取本地数据并发送，读取用户所有操作并发送，通过注册表开机自动启动，监测是否处于沙盒环境并且在沙盒中自动停止活动，监测注册表以防止自己的自动启动被清除。
+  - 此木马通过邮件分发， 邮件中包含一个doc文件链接，打开后offic会提示需要启用宏来查看完整信息，启用宏后此木马会自动解码并且将自己复制进svchost.exe(windows下用于加载动态链接库的通用进程)，然后会开始运行各种功能，包括剩余模块的下载，劫持浏览器，窃取本地数据等。
+  - 木马通过读取进程列表以判断是否有正在打开的浏览器，然后当存在浏览器的时其会通过浏览器的安全漏洞劫持网页，修改用户正在访问的银行网页，截取其输入的密码、账号、pin、等内容并且发送给服务器。
+  - 此类木马对沙盒有有特殊的监测机制，运行在沙盒内的时候系统中会出现若干特征性的监控类设备驱动，当发现自己运行在沙盒中时，木马停止活动以防止自己被安全人员监测出来。
+  - 抵御此木马需要的安全措施包括如下  
+    好吧这个木马基本上都各种层面上利用了windows莫名其妙的安全漏洞，office的漏洞这么多年没有得到好好的处理，svchost对动态链接库的调用机制决定了这个玩意很可能难以简单的处理。其对应的解决方案可能只有虚拟化内核并且将局部的svchost或注册表暴露给恶意进程，可能核心是需要考虑如何隐藏沙盒环境的特征。
+
+- [wiki 计算机病毒](https://en.wikipedia.org/wiki/Computer_virus#First_examples)  
+  - 本文介绍了计算机病毒的一些基本概念，如病毒的感染机制、运行机制、隐藏机制等
+  - 病毒可能通过word或outlook的微程序植入恶意进程，word或outlook允许在文档里附带短小的程序以在开启时自动运行，可能缺少安全性考量。
+  - 病毒可以在boot section中存在，以u盘病毒为典型例子，在这种物理媒体刚被插到电脑上时，一些boot代码会自动被转移到系统中并执行，其中可能潜藏了恶意代码。
 
 
 
