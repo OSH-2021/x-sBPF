@@ -41,11 +41,13 @@
 
 
 ### 安全问题
-
-[Yet Another Reason Containers Don't Contain: Kernel Keyrings](https://www.projectatomic.io/blog/2014/09/yet-another-reason-containers-don-t-contain-kernel-keyrings/)
-
+根本问题
 - docker直接共享内核,减少的抽象层次带来比vm更轻量而高效
 - 同时恶意进程也更容易的攻破Host系统(需要攻破的层次更少)
+
+当关闭selinux时，container通过攻击不受namespace限制的kernel keyring取得其他容器的存于此的key
+[Yet Another Reason Containers Don't Contain: Kernel Keyrings](https://www.projectatomic.io/blog/2014/09/yet-another-reason-containers-don-t-contain-kernel-keyrings/)
+
 
 
 [深度解析 AWS Firecracker 原理篇 – 虚拟化与容器运行时技术](https://aws.amazon.com/cn/blogs/china/deep-analysis-aws-firecracker-principle-virtualization-container-runtime-technology/)
