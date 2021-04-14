@@ -71,7 +71,7 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 
 - JVM和eBPF的结构似乎很像，核心区别可能是JVM运行在用户态而eBPF运行在内核态，同时eBPF出于安全原因有更多的安全限制，也许可以通过学习JVM的相关知识来理解eBPF的实现。或者可以参考JVM的结构让eBPF可以执行更多的功能。
   
-# 4月9日
+## 4月9日
 
 - 需要研究gviser的结构和问题     
 
@@ -102,14 +102,14 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 - 需要研究hyperviser模型和hostOS模型的虚拟化各自的性能缺陷
 
 
-# 4月10日
+## 4月10日
 - 有关eBPF详细概念的paper [文章链接](https://www.researchgate.net/profile/Marcos-Vieira/publication/339084847_Fast_Packet_Processing_with_eBPF_and_XDP_Concepts_Code_Challenges_and_Applications/links/5e4145f592851c7f7f2c28eb/Fast-Packet-Processing-with-eBPF-and-XDP-Concepts-Code-Challenges-and-Applications.pdf)  
   
 
 
 
 
-# 4月13日
+## 4月13日
 - 有关恶意进程的常见行为分析  
   - [安全相关的文章分享站](https://paper.seebug.org/)
   
@@ -131,7 +131,7 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 - gVisor的使用场景
   - gVisor是google开发的，用于实现在云上的安全容器或APP Engine(某一个云上的计算平台)或作为docker的底层实现。
 
-# 4月14日
+## 4月14日
 - docker  
   [docerk结构介绍的专栏](https://draveness.me/docker/)
   - 通过namespace，不同docker容器无法访问其他的进程，在容器位置向系统请求进程列表会只能看到少数几个局部的容器内进程，无法发现主机的其他进程。  
@@ -145,10 +145,14 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
 
   - cgroup（控制组）是用于限制进程对CPU、内存、网络带宽等运行资源的占用强度的。不同的进程被组合成一个cgroup，作为一个整体参与资源的调度，并且可以通过cgroup组策略来限制当前group可以占用多少资源。且cgroup可以嵌套，一个cgroup里面可以包含多个子cgroup。  
   如整个docker可能被放在一个cgroup中以限制总资源使用量，然后docker里面的每个容器中的进程也各自建立cgroup，参与划分docekr-group分配到的总的资源。
-  
+
   - 联合文件系统（Unionfs），实质上概念很简单，此文件系统不管理物理存储，只是依赖于某一个通用的文件系统，并且把不同文件夹的内容映射到同一个文件目录内。似乎是docker的重要组成部分。
 
 
 
 
 
+- 三条技术路线
+  - 在seccomp结构上优化制作更好的系统调用的拦截和判断机制，实现只通过一个简单的过滤器就能保证较强安全性的轻量级安全沙盒。
+  - 尝试将一个基于虚拟化技术的安全沙盒通过bpf程序的方式制作出来并且诸如OS内运行，可能需要修改现有的ebpf认证与导入机制。
+  - 仅将bpf程序作为劫持和修改系统调用的小模块，将其结合到某个现有的用户态沙盒中，从而优化某个用户态沙盒应用的效率
