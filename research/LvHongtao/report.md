@@ -141,14 +141,47 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
   在这种情况下可以通过网络安全策略的方式直接控制容器进程的非法网络访问。  
   libnetwork：docker的网络功能实现的具体技术
   
-  - 利用libcontainer来实现了对文件系统的保护，libcontainer中的chroot技术可以限制某个子系统对应的根目录（rootFS），即在容器内的进程来看，当前FS的root就是实际所在的子目录，因而其无法读取或访问主机上的其他文件。
+  - 利用libcontainer（以及namespace）来实现了对文件系统的保护，libcontainer中的chroot技术可以限制某个子系统对应的根目录（rootFS），即在容器内的进程来看，当前FS的root就是实际所在的子目录，因而其无法读取或访问主机上的其他文件。
 
-  - cgroup（控制组）是用于限制进程对CPU、内存、网络带宽等运行资源的占用强度的。不同的进程被组合成一个cgroup，作为一个整体参与资源的调度，并且可以通过cgroup组策略来限制当前group可以占用多少资源。且cgroup可以嵌套，一个cgroup里面可以包含多个子cgroup。  
+  - cgroup（控制组）是用于限制进程对CPU、内存、网络带宽等运行资源的占用强度的，其也可以用来限制容器内程序对设备的访问。不同的进程被组合成一个cgroup，作为一个整体参与资源的调度，并且可以通过cgroup组策略来限制当前group可以占用多少资源。且cgroup可以嵌套，一个cgroup里面可以包含多个子cgroup。  
   如整个docker可能被放在一个cgroup中以限制总资源使用量，然后docker里面的每个容器中的进程也各自建立cgroup，参与划分docekr-group分配到的总的资源。
 
   - 联合文件系统（Unionfs），实质上概念很简单，此文件系统不管理物理存储，只是依赖于某一个通用的文件系统，并且把不同文件夹的内容映射到同一个文件目录内。似乎是docker的重要组成部分。
+  - 如何搭建docker镜像 [网页链接](https://yeasy.gitbook.io/docker_practice/image/build)
+  - docker相关的没有太大用处的paper [An introduction to docker and analysis of its performance](https://d1wqtxts1xzle7.cloudfront.net/52736106/IJCSNS-20170327.pdf?1492765779=&response-content-disposition=inline%3B+filename%3DAn_Introduction_to_Docker_and_Analysis_o.pdf&Expires=1618388924&Signature=bOduLUrH0SNe~XVDBuQLpbGL6vJWuCC7RjI7IB2X6yhUMuNooLVd-hlu2aUclyjXbI087-oo8lP0aQLlGBLovVnG9gGxNFbtxJSogwXwDYyQD3LFwPaM-zvHfU3R3tuF1chkXHX0DKPZIO~qYOiOJnNufuEMgzonShQV1LsalPWq4g6kmoVNd~FZxx9EFRDyV0TyKtIJODffxD~PKZ-KHhDQT-vJI~G3165Oooy-numRj6lPS2Pzq-0SJVpK6aISee3qXpWfK2pqMehN4B4ZNhgmFCnHwd0WPDaThOj-DU6sUo8tb0FCV2O~MXhkjQNCnkNO67qYuiphX0vYdH2z5A__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA)
+  
+  - 分析了docker安全性的文章 [Analysis of docker security](https://arxiv.org/pdf/1501.02967.pdf)  
+  文章指出了如下观点 
+    - 模型如下：当hostOS中运行的docker容器中有一部分被恶意进程完全控制了，其可以对系统进行如下的攻击如Denial-of-Service 和 Privilege escalation
+    - 为了在这种情况下保护系统安全，容器应当做到如下几点：
+      - process isolation
+      - filesystem isolation
+      - device isolation 
+      - IPC isolation
+      - network isolation
+      - limiting of resources 
+
+  - 对于路线1或路线3，我们可以参考docker的安全策略，此策略在各个角度上都有较好的安全性，而且性能相当的高。
 
 
+- linux下的常见病毒 [专栏](https://segmentfault.com/a/1190000022761270)  
+  - BillGates DDOS攻击
+  - DDG 蠕虫式挖矿
+  - SystemdMiner 蠕虫式挖矿
+  - StartMiner 蠕虫式挖矿
+  - WatchdogsMiner 挖矿
+  - XorDDos 传播感染的机器构成僵尸网络，用于DDos
+  - RainbowMiner 挖矿 
+- linux恶意进程现状分析 [病毒必须死网站](https://blog.malwaremustdie.org/p/linux-malware-research-list-updated.html)
+- 某个天朝开发的ddos僵尸网络恶意进程源码分析[链接](https://blog.malwaremustdie.org/2016/01/mmd-0048-2016-ddostf-new-elf-windows.html)  
+特征  
+  - ELF文件作为攻击的起点
+  - CNC(这个是啥？)
+  - 使用的攻击逻辑为SYN, DNS, TCP and ACK 以及HTTP header。
+- [介绍了经典的几种攻击方法](https://www.inforsec.org/wp/?p=389)
+  - 操作系统中的一个用户态组件——动态装载器，负责装载二进制文件以及它们依赖的库文件到内存中。二进制文件使用动态装载器来支持导入符号的解析功能。有趣的是，这恰好就是一个面对加固应用的攻击者通过泄漏库地址与内容尝试“重塑”一个符号的表现。windows下的svchost.exe攻击或者linux下的elf攻击都是利用了这个组件进行的攻击。
+  - 早期的栈溢出利用依赖于向缓冲区中注入二进制代码(称为shellcode)的能力，并需要覆盖在栈上的一个返回地址使其指向这个缓冲区。随后，当程序从当前函数返回时，执行流就会被重定向到攻击者的shellcode，接着攻击者就能取得程序的控制权。
+  - 动态装载器是一个用户执行环境的组件，它能够帮助在开始时加载应用需要的库并解析库导出的动态符号(函数和全局变量)供应用程序使用。在这一节中，我们将会阐述动态符号解析的过程在基于ELF的系统上是如何工作的 [33]
 
 
 
