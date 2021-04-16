@@ -1,0 +1,7 @@
+[pid 319933] write(1, "total 32\ndrwxrwxr-x 2 lhy lhy 40"..., 339) = -1 EPERM (Operation not permitted)
+[pid 319933] close(1)                   = 0
+[pid 319933] write(2, "ls: ", 4)        = -1 EPERM (Operation not permitted)
+[pid 319933] write(2, "write error", 11) = -1 EPERM (Operation not permitted)
+...
+[pid 319933] write(2, ": Operation not permitted", 25) = -1 EPERM (Operation not permitted)
+[pid 319933] write(2, "\n", 1)          = -1 EPERM (Operation not permitted)

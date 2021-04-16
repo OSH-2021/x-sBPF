@@ -70,6 +70,19 @@
     basewidth       =   0.5em,
 }
 
+\lstdefinestyle{C}{
+    language        =   C, % 语言选Python
+    basicstyle      =   \zihao{-5}\ttfamily,
+    numberstyle     =   \zihao{-5}\ttfamily,
+    keywordstyle    =   \color{blue},
+    keywordstyle    =   [2] \color{teal},
+    stringstyle     =   \color{magenta},
+    commentstyle    =   \color[rgb]{0.416,0.6,0.3333}\ttfamily,
+    breaklines      =   true,   % 自动换行，建议不要写太长的行
+    columns         =   fixed,  % 如果不加这一句，字间距就不固定，很丑，必须加
+    basewidth       =   0.5em,
+}
+
 % \providecommand{\keywords}[1]{\textbf{\textit{关键字：}} #1}
 
 % \renewcommand{\abstractname}{\textbf{摘要：}}
@@ -139,6 +152,41 @@
 % 结构、安全、性能分析
 
 \section{技术依据}
+
+\subsection{BPF应用实现}
+
+\subsubsection{一个简单的BPF程序}
+
+运行BPF程序需要两个部分，一个是BPF内核程序，一个是用户态的加载程序。
+BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编译成可执行文件。
+
+加载进内核的程序可以使用C代码编写，示例C代码如下：
+
+\lstinputlisting[style=C,caption=BPF内核程序代码]{../LiangHengyu/hello_world/bpf_program.c}
+
+程序被设置为在其他程序开始执行时被调用，并输出“Hello World!”。
+
+它将被编译成字节码：
+
+\lstinputlisting[style=C,caption=BPF字节码]{../LiangHengyu/hello_world/bpf_program_asm.txt}
+
+用户态程序如下，它基本上只起一个加载BPF程序的作用：
+
+\lstinputlisting[style=C,caption=BPF加载程序]{../LiangHengyu/hello_world/loader.c}
+
+执行BPF程序，需要以管理员身份调用该加载程序。程序的执行效果如下图所示：
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\columnwidth]{../LiangHengyu/hello_world/test1.png}
+    \caption{示例程序执行效果}
+\end{figure}
+
+\subsubsection{seccomp实现控制系统调用}
+
+这个程序会拒绝被调用程序的所有和写相关的系统调用。
+
+\subsection{Linux内核BPF源码修改}
 
 \section{技术路线}
 

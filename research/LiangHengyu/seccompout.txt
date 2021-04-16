@@ -1,0 +1,424 @@
+lhy@ubuntu:~/linux-observability-with-bpf/code/chapter-8/seccomp$ sudo strace -f ./filter-write "ls -la" > output.txt
+execve("./filter-write", ["./filter-write", "ls -la"], 0xffffc8b62ea0 /* 16 vars */) = 0
+brk(NULL)                               = 0x3af04000
+faccessat(AT_FDCWD, "/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=70955, ...}) = 0
+mmap(NULL, 70955, PROT_READ, MAP_PRIVATE, 3, 0) = 0xffff87eb3000
+close(3)                                = 0
+openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0`B\2\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1450008, ...}) = 0
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffff87ef2000
+mmap(NULL, 1518680, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff87d40000
+mprotect(0xffff87e9b000, 61440, PROT_NONE) = 0
+mmap(0xffff87eaa000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15a000) = 0xffff87eaa000
+mmap(0xffff87eb0000, 11352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff87eb0000
+close(3)                                = 0
+mprotect(0xffff87eaa000, 12288, PROT_READ) = 0
+mprotect(0x410000, 4096, PROT_READ)     = 0
+mprotect(0xffff87ef6000, 4096, PROT_READ) = 0
+munmap(0xffff87eb3000, 70955)           = 0
+prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)  = 0
+prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, {len=6, filter=0xffffc6b535a0}) = 0
+rt_sigaction(SIGINT, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+mmap(NULL, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0) = 0xffff87ee9000
+rt_sigprocmask(SIG_BLOCK, ~[], [CHLD], 8) = 0
+clone(child_stack=0xffff87ef2000, flags=CLONE_VM|CLONE_VFORK|SIGCHLDstrace: Process 319932 attached
+ <unfinished ...>
+[pid 319932] rt_sigprocmask(SIG_BLOCK, NULL, ~[KILL STOP], 8) = 0
+[pid 319932] rt_sigaction(SIGHUP, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGHUP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGILL, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGILL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTRAP, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTRAP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGABRT, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGABRT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGBUS, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGBUS, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGFPE, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGFPE, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGUSR1, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGUSR1, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGSEGV, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGSEGV, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGUSR2, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGUSR2, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGPIPE, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGPIPE, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGALRM, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTERM, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTERM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGSTKFLT, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGSTKFLT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGCHLD, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGCHLD, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGCONT, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGCONT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTSTP, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTSTP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTTIN, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTTIN, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTTOU, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTTOU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGURG, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGURG, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGXCPU, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGXCPU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGXFSZ, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGXFSZ, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGVTALRM, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGVTALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGPROF, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGPROF, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGWINCH, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGWINCH, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGIO, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGIO, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGPWR, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGPWR, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGSYS, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGSYS, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRTMIN, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_1, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_2, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_2, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_3, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_3, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_4, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_4, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_5, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_5, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_6, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_6, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_7, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_7, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_8, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_8, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_9, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_9, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_10, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_10, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_11, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_11, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_12, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_12, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_13, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_13, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_14, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_14, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_15, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_15, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_16, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_16, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_17, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_17, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_18, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_18, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_19, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_19, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_20, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_20, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_21, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_21, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_22, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_22, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_23, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_23, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_24, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_24, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_25, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_25, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_26, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_26, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_27, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_27, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_28, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_28, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_29, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_29, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_30, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_30, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_31, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_31, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_32, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGRT_32, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+[pid 319932] execve("/bin/sh", ["sh", "-c", "ls -la"], 0xffffc6b53780 /* 16 vars */ <unfinished ...>
+[pid 319931] <... clone resumed>)       = 319932
+[pid 319931] munmap(0xffff87ee9000, 36864 <unfinished ...>
+[pid 319932] <... execve resumed>)      = 0
+[pid 319931] <... munmap resumed>)      = 0
+[pid 319932] brk(NULL <unfinished ...>
+[pid 319931] rt_sigprocmask(SIG_SETMASK, [CHLD],  <unfinished ...>
+[pid 319932] <... brk resumed>)         = 0xaaaad8a66000
+[pid 319931] <... rt_sigprocmask resumed>NULL, 8) = 0
+[pid 319932] faccessat(AT_FDCWD, "/etc/ld.so.preload", R_OK <unfinished ...>
+[pid 319931] wait4(319932,  <unfinished ...>
+[pid 319932] <... faccessat resumed>)   = -1 ENOENT (No such file or directory)
+[pid 319932] openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+[pid 319932] fstat(3, {st_mode=S_IFREG|0644, st_size=70955, ...}) = 0
+[pid 319932] mmap(NULL, 70955, PROT_READ, MAP_PRIVATE, 3, 0) = 0xffffbe09b000
+[pid 319932] close(3)                   = 0
+[pid 319932] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+[pid 319932] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0`B\2\0\0\0\0\0"..., 832) = 832
+[pid 319932] fstat(3, {st_mode=S_IFREG|0755, st_size=1450008, ...}) = 0
+[pid 319932] mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffffbe0da000
+[pid 319932] mmap(NULL, 1518680, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffffbdf28000
+[pid 319932] mprotect(0xffffbe083000, 61440, PROT_NONE) = 0
+[pid 319932] mmap(0xffffbe092000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15a000) = 0xffffbe092000
+[pid 319932] mmap(0xffffbe098000, 11352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffffbe098000
+[pid 319932] close(3)                   = 0
+[pid 319932] mprotect(0xffffbe092000, 12288, PROT_READ) = 0
+[pid 319932] mprotect(0xaaaac791b000, 8192, PROT_READ) = 0
+[pid 319932] mprotect(0xffffbe0de000, 4096, PROT_READ) = 0
+[pid 319932] munmap(0xffffbe09b000, 70955) = 0
+[pid 319932] getuid()                   = 0
+[pid 319932] getgid()                   = 0
+[pid 319932] getpid()                   = 319932
+[pid 319932] rt_sigaction(SIGCHLD, {sa_handler=0xaaaac7901f48, sa_mask=~[RTMIN RT_1], sa_flags=0}, NULL, 8) = 0
+[pid 319932] geteuid()                  = 0
+[pid 319932] brk(NULL)                  = 0xaaaad8a66000
+[pid 319932] brk(0xaaaad8a87000)        = 0xaaaad8a87000
+[pid 319932] getppid()                  = 319931
+[pid 319932] getcwd("/home/lhy/linux-observability-with-bpf/code/chapter-8/seccomp", 4096) = 62
+[pid 319932] geteuid()                  = 0
+[pid 319932] getegid()                  = 0
+[pid 319932] rt_sigaction(SIGINT, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGINT, {sa_handler=0xaaaac7901f48, sa_mask=~[RTMIN RT_1], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGQUIT, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=~[RTMIN RT_1], sa_flags=0}, NULL, 8) = 0
+[pid 319932] rt_sigaction(SIGTERM, NULL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+[pid 319932] rt_sigaction(SIGTERM, {sa_handler=SIG_DFL, sa_mask=~[RTMIN RT_1], sa_flags=0}, NULL, 8) = 0
+[pid 319932] newfstatat(AT_FDCWD, "/usr/local/sbin/ls", 0xffffe3412eb8, 0) = -1 ENOENT (No such file or directory)
+[pid 319932] newfstatat(AT_FDCWD, "/usr/local/bin/ls", 0xffffe3412eb8, 0) = -1 ENOENT (No such file or directory)
+[pid 319932] newfstatat(AT_FDCWD, "/usr/sbin/ls", 0xffffe3412eb8, 0) = -1 ENOENT (No such file or directory)
+[pid 319932] newfstatat(AT_FDCWD, "/usr/bin/ls", {st_mode=S_IFREG|0755, st_size=137888, ...}, 0) = 0
+[pid 319932] clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLDstrace: Process 319933 attached
+ <unfinished ...>
+[pid 319933] execve("/usr/bin/ls", ["ls", "-la"], 0xaaaac791faa0 /* 17 vars */ <unfinished ...>
+[pid 319932] <... clone resumed>, child_tidptr=0xffffbe0dad00) = 319933
+[pid 319932] wait4(-1,  <unfinished ...>
+[pid 319933] <... execve resumed>)      = 0
+[pid 319933] brk(NULL)                  = 0xaaaae65ef000
+[pid 319933] faccessat(AT_FDCWD, "/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=70955, ...}) = 0
+[pid 319933] mmap(NULL, 70955, PROT_READ, MAP_PRIVATE, 3, 0) = 0xffff8502d000
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0 e\0\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=154872, ...}) = 0
+[pid 319933] mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffff8506c000
+[pid 319933] mmap(NULL, 227800, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff84ff5000
+[pid 319933] mprotect(0xffff8501a000, 61440, PROT_NONE) = 0
+[pid 319933] mmap(0xffff85029000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x24000) = 0xffff85029000
+[pid 319933] mmap(0xffff8502b000, 6616, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff8502b000
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0`B\2\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(3, {st_mode=S_IFREG|0755, st_size=1450008, ...}) = 0
+[pid 319933] mmap(NULL, 1518680, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff84e82000
+[pid 319933] mprotect(0xffff84fdd000, 61440, PROT_NONE) = 0
+[pid 319933] mmap(0xffff84fec000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15a000) = 0xffff84fec000
+[pid 319933] mmap(0xffff84ff2000, 11352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff84ff2000
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\"\0\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=514504, ...}) = 0
+[pid 319933] mmap(NULL, 578176, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff84df4000
+[pid 319933] mprotect(0xffff84e70000, 65536, PROT_NONE) = 0
+[pid 319933] mmap(0xffff84e80000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7c000) = 0xffff84e80000
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libdl.so.2", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\21\0\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=14528, ...}) = 0
+[pid 319933] mmap(NULL, 78080, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff84de0000
+[pid 319933] mprotect(0xffff84de3000, 61440, PROT_NONE) = 0
+[pid 319933] mmap(0xffff84df2000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0xffff84df2000
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libpthread.so.0", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0(q\0\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(3, {st_mode=S_IFREG|0755, st_size=164304, ...}) = 0
+[pid 319933] mmap(NULL, 197624, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0xffff84daf000
+[pid 319933] mprotect(0xffff84dcb000, 61440, PROT_NONE) = 0
+[pid 319933] mmap(0xffff84dda000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b000) = 0xffff84dda000
+[pid 319933] mmap(0xffff84ddc000, 13304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff84ddc000
+[pid 319933] close(3)                   = 0
+[pid 319933] mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xffff8506a000
+[pid 319933] mprotect(0xffff84fec000, 12288, PROT_READ) = 0
+[pid 319933] mprotect(0xffff84dda000, 4096, PROT_READ) = 0
+[pid 319933] mprotect(0xffff84df2000, 4096, PROT_READ) = 0
+[pid 319933] mprotect(0xffff84e80000, 4096, PROT_READ) = 0
+[pid 319933] mprotect(0xffff85029000, 4096, PROT_READ) = 0
+[pid 319933] mprotect(0xaaaabad4d000, 8192, PROT_READ) = 0
+[pid 319933] mprotect(0xffff85070000, 4096, PROT_READ) = 0
+[pid 319933] munmap(0xffff8502d000, 70955) = 0
+[pid 319933] set_tid_address(0xffff8506a6e0) = 319933
+[pid 319933] set_robust_list(0xffff8506a6f0, 24) = 0
+[pid 319933] rt_sigaction(SIGRTMIN, {sa_handler=0xffff84db5bb0, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+[pid 319933] rt_sigaction(SIGRT_1, {sa_handler=0xffff84db5c70, sa_mask=[], sa_flags=SA_RESTART|SA_SIGINFO}, NULL, 8) = 0
+[pid 319933] rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+[pid 319933] prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+[pid 319933] statfs("/sys/fs/selinux", 0xffffeeeec620) = -1 ENOENT (No such file or directory)
+[pid 319933] statfs("/selinux", 0xffffeeeec620) = -1 ENOENT (No such file or directory)
+[pid 319933] brk(NULL)                  = 0xaaaae65ef000
+[pid 319933] brk(0xaaaae6610000)        = 0xaaaae6610000
+[pid 319933] openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+[pid 319933] read(3, "nodev\tsysfs\nnodev\ttmpfs\nnodev\tbd"..., 1024) = 477
+[pid 319933] read(3, "", 1024)          = 0
+[pid 319933] close(3)                   = 0
+[pid 319933] faccessat(AT_FDCWD, "/etc/selinux/config", F_OK) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/lib/locale/locale-archive", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=14537584, ...}) = 0
+[pid 319933] mmap(NULL, 14537584, PROT_READ, MAP_PRIVATE, 3, 0) = 0xffff83fd1000
+[pid 319933] close(3)                   = 0
+[pid 319933] ioctl(1, TCGETS, 0xffffeeeec500) = -1 ENOTTY (Inappropriate ioctl for device)
+[pid 319933] ioctl(1, TIOCGWINSZ, 0xffffeeeec640) = -1 ENOTTY (Inappropriate ioctl for device)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/locale.alias", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=2996, ...}) = 0
+[pid 319933] read(3, "# Locale name alias data base.\n#"..., 4096) = 2996
+[pid 319933] read(3, "", 4096)          = 0
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.UTF-8/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.utf8/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.UTF-8/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.utf8/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en/LC_TIME/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/lib/aarch64-linux-gnu/gconv/gconv-modules.cache", O_RDONLY) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=27004, ...}) = 0
+[pid 319933] mmap(NULL, 27004, PROT_READ, MAP_SHARED, 3, 0) = 0xffff85063000
+[pid 319933] close(3)                   = 0
+[pid 319933] futex(0xffff84ff132c, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+[pid 319933] openat(AT_FDCWD, ".", O_RDONLY|O_NONBLOCK|O_CLOEXEC|O_DIRECTORY) = 3
+[pid 319933] fstat(3, {st_mode=S_IFDIR|0775, st_size=4096, ...}) = 0
+[pid 319933] getdents64(3, /* 7 entries */, 32768) = 208
+[pid 319933] newfstatat(AT_FDCWD, "..", {st_mode=S_IFDIR|0775, st_size=4096, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr("..", "security.selinux", 0xaaaae65f12f0, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr("..", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] getxattr("..", "system.posix_acl_default", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 4
+[pid 319933] connect(4, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+[pid 319933] close(4)                   = 0
+[pid 319933] socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 4
+[pid 319933] connect(4, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+[pid 319933] close(4)                   = 0
+[pid 319933] openat(AT_FDCWD, "/etc/nsswitch.conf", O_RDONLY|O_CLOEXEC) = 4
+[pid 319933] fstat(4, {st_mode=S_IFREG|0644, st_size=542, ...}) = 0
+[pid 319933] read(4, "# /etc/nsswitch.conf\n#\n# Example"..., 4096) = 542
+[pid 319933] read(4, "", 4096)          = 0
+[pid 319933] close(4)                   = 0
+[pid 319933] openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 4
+[pid 319933] fstat(4, {st_mode=S_IFREG|0644, st_size=70955, ...}) = 0
+[pid 319933] mmap(NULL, 70955, PROT_READ, MAP_PRIVATE, 4, 0) = 0xffff8502d000
+[pid 319933] close(4)                   = 0
+[pid 319933] openat(AT_FDCWD, "/lib/aarch64-linux-gnu/libnss_files.so.2", O_RDONLY|O_CLOEXEC) = 4
+[pid 319933] read(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0*\0\0\0\0\0\0"..., 832) = 832
+[pid 319933] fstat(4, {st_mode=S_IFREG|0644, st_size=51616, ...}) = 0
+[pid 319933] mmap(NULL, 140616, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 4, 0) = 0xffff83fae000
+[pid 319933] mprotect(0xffff83fb9000, 65536, PROT_NONE) = 0
+[pid 319933] mmap(0xffff83fc9000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 4, 0xb000) = 0xffff83fc9000
+[pid 319933] mmap(0xffff83fcb000, 21832, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xffff83fcb000
+[pid 319933] close(4)                   = 0
+[pid 319933] mprotect(0xffff83fc9000, 4096, PROT_READ) = 0
+[pid 319933] munmap(0xffff8502d000, 70955) = 0
+[pid 319933] openat(AT_FDCWD, "/etc/passwd", O_RDONLY|O_CLOEXEC) = 4
+[pid 319933] lseek(4, 0, SEEK_CUR)      = 0
+[pid 319933] fstat(4, {st_mode=S_IFREG|0644, st_size=2734, ...}) = 0
+[pid 319933] read(4, "root:x:0:0:root:/root:/bin/bash\n"..., 4096) = 2734
+[pid 319933] close(4)                   = 0
+[pid 319933] socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 4
+[pid 319933] connect(4, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+[pid 319933] close(4)                   = 0
+[pid 319933] socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 4
+[pid 319933] connect(4, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+[pid 319933] close(4)                   = 0
+[pid 319933] openat(AT_FDCWD, "/etc/group", O_RDONLY|O_CLOEXEC) = 4
+[pid 319933] lseek(4, 0, SEEK_CUR)      = 0
+[pid 319933] fstat(4, {st_mode=S_IFREG|0644, st_size=1042, ...}) = 0
+[pid 319933] read(4, "root:x:0:\ndaemon:x:1:\nbin:x:2:\ns"..., 4096) = 1042
+[pid 319933] close(4)                   = 0
+[pid 319933] newfstatat(AT_FDCWD, ".gitignore", {st_mode=S_IFREG|0664, st_size=19, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr(".gitignore", "security.selinux", 0xaaaae65ffcd0, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr(".gitignore", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] newfstatat(AT_FDCWD, ".", {st_mode=S_IFDIR|0775, st_size=4096, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr(".", "security.selinux", 0xaaaae65ffe00, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr(".", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] getxattr(".", "system.posix_acl_default", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] newfstatat(AT_FDCWD, "main.c", {st_mode=S_IFREG|0664, st_size=1211, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr("main.c", "security.selinux", 0xaaaae65fff30, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr("main.c", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] newfstatat(AT_FDCWD, "README.md", {st_mode=S_IFREG|0664, st_size=2831, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr("README.md", "security.selinux", 0xaaaae6600060, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr("README.md", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] newfstatat(AT_FDCWD, "output.txt", {st_mode=S_IFREG|0664, st_size=0, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr("output.txt", "security.selinux", 0xaaaae6600190, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr("output.txt", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] newfstatat(AT_FDCWD, "filter-write", {st_mode=S_IFREG|0775, st_size=9472, ...}, AT_SYMLINK_NOFOLLOW) = 0
+[pid 319933] lgetxattr("filter-write", "security.selinux", 0xaaaae66002c0, 255) = -1 ENODATA (No data available)
+[pid 319933] getxattr("filter-write", "system.posix_acl_access", NULL, 0) = -1 ENODATA (No data available)
+[pid 319933] getdents64(3, /* 0 entries */, 32768) = 0
+[pid 319933] close(3)                   = 0
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.UTF-8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.utf8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.UTF-8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.utf8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US.UTF-8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US.utf8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en.UTF-8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en.utf8/LC_MESSAGES/coreutils.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en/LC_MESSAGES/coreutils.mo", O_RDONLY) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=613, ...}) = 0
+[pid 319933] mmap(NULL, 613, PROT_READ, MAP_PRIVATE, 3, 0) = 0xffff85062000
+[pid 319933] close(3)                   = 0
+[pid 319933] fstat(1, {st_mode=S_IFREG|0664, st_size=0, ...}) = 0
+[pid 319933] openat(AT_FDCWD, "/etc/localtime", O_RDONLY|O_CLOEXEC) = 3
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=573, ...}) = 0
+[pid 319933] fstat(3, {st_mode=S_IFREG|0644, st_size=573, ...}) = 0
+[pid 319933] read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\0\0\3\0\0\0\0"..., 4096) = 573
+[pid 319933] lseek(3, -348, SEEK_CUR)   = 225
+[pid 319933] read(3, "TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\0\0\3\0\0\0\0"..., 4096) = 348
+[pid 319933] close(3)                   = 0
+[pid 319933] write(1, "total 32\ndrwxrwxr-x 2 lhy lhy 40"..., 339) = -1 EPERM (Operation not permitted)
+[pid 319933] close(1)                   = 0
+[pid 319933] write(2, "ls: ", 4)        = -1 EPERM (Operation not permitted)
+[pid 319933] write(2, "write error", 11) = -1 EPERM (Operation not permitted)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.UTF-8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US.utf8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en_US/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.UTF-8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en.utf8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale/en/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US.UTF-8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US.utf8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en_US/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en.UTF-8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en.utf8/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] openat(AT_FDCWD, "/usr/share/locale-langpack/en/LC_MESSAGES/libc.mo", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 319933] write(2, ": Operation not permitted", 25) = -1 EPERM (Operation not permitted)
+[pid 319933] write(2, "\n", 1)          = -1 EPERM (Operation not permitted)
+[pid 319933] exit_group(2)              = ?
+[pid 319933] +++ exited with 2 +++
+[pid 319932] <... wait4 resumed>[{WIFEXITED(s) && WEXITSTATUS(s) == 2}], 0, NULL) = 319933
+[pid 319932] --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=319933, si_uid=0, si_status=2, si_utime=0, si_stime=0} ---
+[pid 319932] rt_sigreturn({mask=[]})    = 319933
+[pid 319932] exit_group(2)              = ?
+[pid 319932] +++ exited with 2 +++
+<... wait4 resumed>[{WIFEXITED(s) && WEXITSTATUS(s) == 2}], 0, NULL) = 319932
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=319932, si_uid=0, si_status=2, si_utime=0, si_stime=0} ---
+exit_group(512)                         = ?
++++ exited with 0 +++
