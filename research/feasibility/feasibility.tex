@@ -83,6 +83,19 @@
     basewidth       =   0.5em,
 }
 
+\lstdefinestyle{bash}{
+    language        =   bash, % 语言选Python
+    basicstyle      =   \zihao{-5}\ttfamily,
+    numberstyle     =   \zihao{-5}\ttfamily,
+    keywordstyle    =   \color{blue},
+    keywordstyle    =   [2] \color{teal},
+    stringstyle     =   \color{black},
+    commentstyle    =   \color[rgb]{0.416,0.6,0.3333}\ttfamily,
+    breaklines      =   true,   % 自动换行，建议不要写太长的行
+    columns         =   fixed,  % 如果不加这一句，字间距就不固定，很丑，必须加
+    basewidth       =   0.5em,
+}
+
 % \providecommand{\keywords}[1]{\textbf{\textit{关键字：}} #1}
 
 % \renewcommand{\abstractname}{\textbf{摘要：}}
@@ -149,7 +162,118 @@
 
 \section{理论依据}
 
-% 结构、安全、性能分析
+\subsection{恶意进程}
+
+\subsubsection{恶意进程行为}
+
+以下是一个木马行为的分析：\cite{ZeuS2018}
+
+\begin{itemize}
+    \item 此木马功能非常丰富，包括使用VNC远程桌面控制电脑，截屏并发送，
+    读取本地数据并发送，读取用户所有操作并发送，通过注册表开机自动启动，
+    监测是否处于沙盒环境并且在沙盒中自动停止活动，监测注册表以防止自己的自动启动被清除。
+
+    \item 此木马通过邮件分发，邮件中包含一个doc文件链接，
+    打开后offic会提示需要启用宏来查看完整信息，
+    启用宏后此木马会自动解码并且将自己复制进svchost.exe
+    （windows下用于加载动态链接库的通用进程），然后会开始运行各种功能，
+    包括剩余模块的下载，劫持浏览器，窃取本地数据等。
+    
+    \item 木马通过读取进程列表以判断是否有正在打开的浏览器，
+    然后当存在浏览器的时其会通过浏览器的安全漏洞劫持网页，
+    修改用户正在访问的银行网页，截取其输入的密码、账号、pin、等内容并且发送给服务器。
+    
+    \item 此类木马对沙盒有有特殊的监测机制，
+    运行在沙盒内的时候系统中会出现若干特征性的监控类设备驱动，
+    当发现自己运行在沙盒中时，木马停止活动以防止自己被安全人员监测出来。
+    
+    \item 抵御此木马需要的安全措施包括如下：
+    这个木马基本上都各种层面上利用了windows莫名其妙的安全漏洞，
+    office的漏洞这么多年没有得到好好的处理，
+    svchost对动态链接库的调用机制决定了这个玩意很可能难以简单的处理。
+    其对应的解决方案可能只有虚拟化内核并且将局部的svchost或注册表暴露给恶意进程，
+    可能核心是需要考虑如何隐藏沙盒环境的特征。
+\end{itemize}
+
+\subsubsection{linux下的恶意进程}
+
+Linux环境下的常见病毒有：\cite{LinuxVirus2020}
+
+\begin{itemize}
+    \item BillGates DDOS攻击
+    \item DDG 蠕虫式挖矿
+    \item SystemdMiner 蠕虫式挖矿
+    \item StartMiner 蠕虫式挖矿
+    \item WatchdogsMiner 挖矿
+    \item XorDDos 传播感染的机器构成僵尸网络，用于DDos
+    \item RainbowMiner 挖矿
+\end{itemize}
+
+\subsubsection{经典攻击方法}
+
+在这篇文章\cite{di2015elf}中介绍了几种经典的攻击方法：
+
+\begin{itemize}
+    \item 操作系统中的一个用户态组件——动态装载器，
+    负责装载二进制文件以及它们依赖的库文件到内存中。
+    二进制文件使用动态装载器来支持导入符号的解析功能。有趣的是，
+    这恰好就是一个面对加固应用的攻击者通过泄漏库地址与内容尝试“重塑”一个符号的表现。
+    windows下的svchost.exe攻击或者linux下的elf攻击都是利用了这个组件进行的攻击。
+    \item 早期的栈溢出利用依赖于向缓冲区中注入二进制代码(称为shellcode)的能力，
+    并需要覆盖在栈上的一个返回地址使其指向这个缓冲区。随后，当程序从当前函数返回时，
+    执行流就会被重定向到攻击者的shellcode，接着攻击者就能取得程序的控制权。
+    \item 动态装载器是一个用户执行环境的组件，
+    它能够帮助在开始时加载应用需要的库并解析库导出的动态符号（函数和全局变量）供应用程序使用。
+    在这一节中，我们将会阐述动态符号解析的过程在基于ELF的系统上是如何工作的。
+\end{itemize}
+
+\subsection{docker安全}
+
+\begin{enumerate}
+    \item 通过namespace，不同docker容器无法访问其他的进程，
+    在容器位置向系统请求进程列表会只能看到少数几个局部的容器内进程，无法发现主机的其他进程。
+    通过这种技术，类似于zeus的劫持浏览器进程的木马难以危害主机安全。
+    
+    \item 通过namespace，每个docker会被置入隔离的网络环境中，
+    对外的网络功能是通过在每个docker上运行虚拟的网卡并且以桥接模式（默认）与主机网卡链接来实现的。
+    在这种情况下可以通过网络安全策略的方式直接控制容器进程的非法网络访问。\\
+    \textbf{libnetwork}：docker的网络功能实现的具体技术
+    
+    \item 利用libcontainer（以及namespace）来实现了对文件系统的保护，
+    libcontainer中的chroot技术可以限制某个子系统对应的根目录（rootFS），
+    即在容器内的进程来看，当前FS的root就是实际所在的子目录，因而其无法读取或访问主机上的其他文件。
+    
+    \item cgroup（控制组）是用于限制进程对CPU、内存、网络带宽等运行资源的占用强度的，
+    其也可以用来限制容器内程序对设备的访问。不同的进程被组合成一个cgroup，
+    作为一个整体参与资源的调度，并且可以通过cgroup组策略来限制当前group可以占用多少资源。
+    且cgroup可以嵌套，一个cgroup里面可以包含多个子cgroup。
+    如整个docker可能被放在一个cgroup中以限制总资源使用量，
+    然后docker里面的每个容器中的进程也各自建立cgroup，
+    参与划分docekr-group分配到的总的资源。
+    
+    \item 联合文件系统（Unionfs），实质上概念很简单，
+    此文件系统不管理物理存储，只是依赖于某一个通用的文件系统，
+    并且把不同文件夹的内容映射到同一个文件目录内。似乎是docker的重要组成部分。
+\end{enumerate}
+
+在这篇文章中，分析了docker的安全性：\cite{bui2015analysis}
+
+\begin{itemize}
+    \item 模型如下：当hostOS中运行的docker容器中有一部分被恶意进程完全控制了，
+    其可以对系统进行如下的攻击如Denial-of-Service 和 Privilege escalation。
+    \item 为了在这种情况下保护系统安全，容器应当做到如下几点：
+    \begin{itemize}
+        \item process isolation
+        \item filesystem isolation
+        \item device isolation
+        \item IPC isolation
+        \item network isolation
+        \item limiting of resources
+    \end{itemize}
+\end{itemize}
+
+对于路线\ref{路线1}或路线\ref{路线3}，我们可以参考docker的安全策略，
+此策略在各个角度上都有较好的安全性，而且性能相当的高。
 
 \section{技术依据}
 
@@ -158,7 +282,7 @@
 \subsubsection{一个简单的BPF程序}
 
 运行BPF程序需要两个部分，一个是BPF内核程序，一个是用户态的加载程序。
-BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编译成可执行文件。
+BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编译成可执行文件。\cite{calavera2019linux}
 
 加载进内核的程序可以使用C代码编写，示例C代码如下：
 
@@ -170,7 +294,7 @@ BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编�
 
 \lstinputlisting[style=C,caption=BPF字节码]{../LiangHengyu/hello_world/bpf_program_asm.txt}
 
-用户态程序如下，它基本上只起一个加载BPF程序的作用：
+用户态的加载程序如下，它基本上只起一个加载BPF程序的作用：
 
 \lstinputlisting[style=C,caption=BPF加载程序]{../LiangHengyu/hello_world/loader.c}
 
@@ -182,9 +306,47 @@ BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编�
     \caption{示例程序执行效果}
 \end{figure}
 
+可以看到，每当一个系统中有新的程序开始执行时，该BPF程序就会被调用，并输出一个{\ttfamily Hello World!}。
+
 \subsubsection{seccomp实现控制系统调用}
 
-这个程序会拒绝被调用程序的所有和写相关的系统调用。
+我们编写的seccomp程序实际上是一种“过滤器”，类似“正则表达式”。
+它会利用BPF将过滤器程序加载到内核当中监测被监控程序的系统调用，
+一旦该程序的系统调用匹配上了你编写的格式，对该被监控程序的一些行为就会被触发。
+
+seccomp在头文件{\ttfamily <linux/seccomp.h>}中定义了有限的一些控制被监控的进程的操作。
+
+\lstinputlisting[style=C,caption=seccomp头文件]{../LiangHengyu/seccomp/seccomp_part.h}
+
+例如，使用{\ttfamily SECCOMP\_RET\_KILL\_PROCESS}会关闭该程序，
+使用{\ttfamily SECCOMP\_RET\_ERRNO}会拒绝该程序相关的系统调用。
+
+这里有如下的一个示例程序，这个程序会拒绝被调用程序的所有和写相关的系统调用。
+
+\lstinputlisting[style=C,caption=BPF加载程序]{../LiangHengyu/seccomp/main.c}
+
+编译好这个程序，我们使用这个程序调用一个需要进行写操作的程序{\ttfamily ls}，
+同时我们还需要使用{\ttfamily strace}来跟踪{\ttfamily ls}所有的系统调用。
+执行的\textbf{部分}结果如下：
+
+\lstinputlisting[style=bash,caption=seccomp程序执行结果]{../LiangHengyu/seccompshort.txt}
+
+为了节省空间，大部分程序的输出都被省略掉了，完整结果可见代码\ref{seccomp完整}。
+
+可以看到，{\ttfamily ls}正确执行出了通常的运行结果：
+{\ttfamily "total 32\verb|\|ndrwxrwxr-x 2 lhy lhy 40"}，
+但是执行的{\ttfamily write}系统调用均被拒绝了，所以在终端并不会看到任何的输出。
+此外，程序并没有被kill掉，调用了不允许的系统调用后，还在正常运行。
+
+\subsubsection{小结}
+
+BPF程序能高效成为一个内核中的profiler，这是我们接下来将引出的第\ref{路线1}和第\ref{路线3}的主要技术依据，
+在后文中会对技术依据进行更详细的解释。
+
+但是我们也能注意到，类似seccomp的BPF安全应用有非常大的局限性。
+如果我们的过滤机制不够完善，它在阻止病毒程序的运行的同时，还阻止了正常程序的运行。
+这也是我们改进想法由来的原因之一，同时，我们据此还有了另一个思路。
+下一小节中我们会尝试解除当前BPF的一些限制，让BPF有更完善的功能，支持我们沙盒的运行。
 
 \subsection{Linux内核BPF源码修改}
 
@@ -192,14 +354,20 @@ BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编�
 
 \begin{enumerate}
     \item 在seccomp结构上优化制作更好的系统调用的拦截和判断机制，
-    实现只通过一个简单的过滤器就能保证较强安全性的轻量级安全沙盒。
+    实现只通过一个简单的过滤器就能保证较强安全性的轻量级安全沙盒。\label{路线1}
     \item 尝试将一个基于虚拟化技术的安全沙盒通过bpf程序的方式制作出来并且诸如OS内运行，
-    可能需要修改现有的ebpf认证与导入机制。
+    可能需要修改现有的ebpf认证与导入机制。\label{路线2}
     \item 仅将bpf程序作为劫持和修改系统调用的小模块，
-    将其结合到某个现有的用户态沙盒中，从而优化某个用户态沙盒应用的效率。
+    将其结合到某个现有的用户态沙盒中，从而优化某个用户态沙盒应用的效率。\label{路线3}
 \end{enumerate}
 
 \bibliography{../paper.bib}
 \bibliographystyle{ieeetr}
+
+\section{附录}
+
+\subsection{seccomp完整输出结果}
+
+\lstinputlisting[style=bash,caption=seccomp程序执行结果,label=seccomp完整]{../LiangHengyu/seccompout.txt}
 
 \end{document}
