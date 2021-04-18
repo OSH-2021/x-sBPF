@@ -205,7 +205,7 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
     监测是否处于沙盒环境并且在沙盒中自动停止活动，监测注册表以防止自己的自动启动被清除。
 
     \item 此木马的传播主要通过邮件，在恶意邮件中包含一个doc文件作为附件，
-    打开后offic会提示需要启用宏来查看完整信息，
+    打开后office会提示需要启用宏来查看完整信息，
     一旦用户点击启用宏后，此木马会自动解码并且将自己复制进svchost.exe
     ，然后其遍可以开始运行各种功能，包括剩余模块的下载，劫持浏览器，窃取本地数据等。
     
@@ -272,8 +272,117 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
     \end{itemize}
 \end{itemize}
 
-对于路线\ref{路线1}或路线\ref{路线3}，我们可以参考docker的安全策略，
+对于路线一（见\ref{路线一}）或路线三（见\ref{路线三}），我们可以参考docker的安全策略，
 此策略在各个角度上都有较好的安全性，而且性能相当的高。
+
+\subsection{macOS沙盒分析}
+
+\subsubsection{macOS沙盒的权限设置}
+
+macOS沙盒中有如下的权限设置：
+
+\begin{itemize}
+    \item Essentials：是否使用访问控制技术
+    \item Network：接收和发送网络数据的权限
+    \item Hardware：硬件权限，如照相机
+    \item App Data：访问地址簿，位置，日历的权限
+    \item File Access：其中设置是否拥有访问系统全部文件的权限已被剥离。
+    读写限制十分严格，只有用户主动操作才能实现一般文件的读写
+    （通过脱离程序语境的Powerbox机制——一个选择文件的对话框），
+    否则只有应用程序自己的目录是可见的。下载内容、图片、音乐、电影各有特殊限制规则。
+\end{itemize}
+
+\subsubsection{应用程序沙盒化}
+
+\begin{itemize}
+    \item 在使用苹果的开发软件（如Xcode）进行build时启用沙盒并进行沙盒权限确认即可。
+    \item 建立于MacOS沙盒不是程序的义务，但却是上架Mac App Store的必要条件。
+    就算上架MAS，沙盒机制也是可以绕过去的。开发者在商店之外提供一个程序外挂供用户自由安装。
+    由上架MAS的程序指挥外挂进行沙盒外操作即可。
+    \item iOS是一个从一开始就彻底应用沙盒机制的系统，
+    正常情况下，所有 iOS 设备都只能安装 App Store 中的应用程序，
+    而所有这些应用程序都彻底采用了沙盒机制，不能访问除自己目录之外的资源。
+    虽然保证了安全性，但是也牺牲了一些便利性，如他们的应用程序无法调用其它程序配合完成任务，
+    导致必须重复实现各种已有的功能（如pdf阅读功能）。
+\end{itemize}
+
+\subsubsection{沙盒机制}
+
+沙盒机制见下图：
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{../ChenSirui/MacOS Sandbox/Sandbox_Structure.PNG}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{../ChenSirui/MacOS Sandbox/Sandbox_Process.png}
+    \caption{沙盒机制\cite{blazakis2011apple}}
+\end{figure}
+
+\begin{itemize}
+    \item 新的应用程序需要经过初始化。原先的、还未运行过的程序没有被sandbox约束，
+    但是在初始化过程中，如果动态链接器确认了程序启用sandbox，
+    就会根据程序中的权限设置(entitlements)编译出profile。在每次程序运行时，
+    动态链接器都会在应用程序的语境中，根据这个profile初始化沙盒，
+    然后才把控制权递交给程序。
+    \item 流程
+    \begin{itemize}
+        \item 1 进程尝试进行一次系统调用（system call），调用内核功能。
+        \item 2、3 MAC层需要根据该进程的安全策略判断此次系统调用是否可以执行。
+        \item 4、5、6、7、8、9 如果存在策略的话，通过sandbox.kext（提供system call的hook函数）和AppleMatch.kext（解析沙盒的profile）两个内核扩展实现权限的检查。
+        \item 10 返回调用结果
+    \end{itemize}
+    \item XPC服务
+    \begin{itemize}
+        \item 是MacOS下的一种IPC(进程间通信)技术, 它实现了权限隔离, 
+        使得App Sandbox更加完备。
+        \item 将程序隔离成多块能提高稳定性，在某部分crash时，主程序依然运作。
+        \item 沙盒中应用无法让子进程拥有比自身更高的权限，但是开发者可以设定XPC helpers，
+        它们各自运行在自己的沙盒中并拥有刚好供功能实现所需的权限。实现权限分割，
+        安全性就进一步提高了。
+    \end{itemize}
+    \item 和linux下的seccomp有相似之处，即在内核中对system call进行过滤。
+    沙盒初始化就像seccomp程序启用。
+\end{itemize}
+
+\subsubsection{macOS沙盒优缺点}
+
+\begin{itemize}
+    \item \textbf{优点}
+    \begin{enumerate}
+        \item 安全性高。不影响性能。
+        \item 开发者使用方便。
+        \item 对于用户需求的敏感访问有系统接管办法，如Powerbox。
+    \end{enumerate}
+    \item \textbf{缺点}
+    \begin{enumerate}
+        \item 自由度低。非MAS平台的应用，大部分没有采用Sandbox机制。
+        \item 沙盒有不可避免的漏洞：
+        \begin{itemize}
+            \item 沙盒在应用程序的语境下初始化，
+            如果程序偶然在沙盒初始化完成前就运行了代码，就存在保护失效的可能性。 
+            事实上bug确实发生了。\cite{blochberger2019state}
+            \item 在规则内做出背离沙箱的行为。\cite{Mojave2018}尽管Apple阻止应用程序注册全局接收分布式通知，
+            但没有任何机制能够阻止沙箱应用程序注册接收任何通知。因此，如果按照名称，
+            注册所有的分布式通知，恶意应用程序可以轻而易举地避开Apple针对沙箱的限制。
+            尽管这需要一些额外的代码来实现，但其带来的影响是造成任何应用程序都可以通过遍历注册，
+            来接收（捕获）到所有分布式通知，包括在沙箱中也是如此。
+        \end{itemize}
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{小结}
+
+Apple系统的安全性很大程度上都无法离开一种强大的闭环生态，想在设备上运行就必须得遵守相应的约定。
+而Linux是一个非常开放的环境，就此而言，我们不可能让应用在开发的时候就强制开启沙盒，
+所以我们几乎是没有办法实现一个兼顾安全性、性能、通用性的沙盒的。
+
+对macOS沙盒结构的研究，对后续路线一（\ref{路线一}）和路线三（\ref{路线三}）均有启发。
+拦截系统调用是目前大多数沙盒的做法，在Linux下，我们可以借助BPF实现系统调用的拦截。
+同时，我们可以用编写安全策略加额外策略模块的方式来认证每次系统调用是否安全，若安全则允许调用，
+若不安全则拒绝调用。
 
 \section{技术依据}
 
@@ -340,7 +449,7 @@ seccomp在头文件{\ttfamily <linux/seccomp.h>}中定义了有限的一些控�
 
 \subsubsection{小结}
 
-BPF程序能高效成为一个内核中的profiler，这是我们接下来将引出的第\ref{路线1}和第\ref{路线3}的主要技术依据，
+BPF程序能高效成为一个内核中的profiler，这是我们接下来将引出的路线一（见\ref{路线一}）或路线三（见\ref{路线三}）的主要技术依据，
 在后文中会对技术依据进行更详细的解释。
 
 但是我们也能注意到，类似seccomp的BPF安全应用有非常大的局限性。
@@ -349,43 +458,46 @@ BPF程序能高效成为一个内核中的profiler，这是我们接下来将引
 下一小节中我们会尝试解除当前BPF的一些限制，让BPF有更完善的功能，支持我们沙盒的运行。
 
 \subsection{Linux内核BPF源码的调研}
-路线一或者路线二中希望实现的沙盒程序的复杂度可能难以直接载入现有的linux eBPF，
+路线一（\ref{路线一}）或者路线二（\ref{路线二}）中希望实现的沙盒程序的复杂度可能难以直接载入现有的linux eBPF，
 为了实现这些功能，我们将有必要对linux的eBPF代码进行修改或者需要定制自己的eBPF内核模块。
 为此，我们对linux内核中的BPF源码进行了简单的调研。具体的，我们研究了如何修改verify模块，
 如何添加更多的helper函数，
 \subsubsection{修改linux中BPF源码的意义}
 BPF的程序的功能丰富度是和内核对BPF程序的支持直接相关的，
 例如每个BPF程序的输入输出规范都是直接以模板形式定义在内核源码中的，
-而BPF程序可以使用的系统调用也是直接在linux/kernel/bpf/helper.c中直接定义的，
+而BPF程序可以使用的系统调用也是直接在{\ttfamily linux/kernel/bpf/helper.c}中直接定义的，
 因此实现诸如劫持系统调用等的功能讲不可避免的会涉及到对内核中BPF源码的修改或重写。
 我们也有可能会在后续的工作中发现我们的程序在现有的verifier体系下难以得到认可，
 例如我们在bpf中实现的文件系统管理服务可能会被verifier认定为不会终止，于是被拒绝载入到内核中，
 这种情况下我们便会需要修改verifier对软件安全性的认证过程，用更加智能的检测手段来检查bpf程序的安全性，
 从而防止我们的程序被错误的认定为不安全。
 \subsubsection{linux下BPF verifier部分的源码结构分析}
-与linux中大部分源码相似，BPFverifier的头文件位于linux/include/linux/bpf_verifier.h，
-原文件位于linux/kernel/bpf/verifier.c。头文件中最重要的数据结构为struct bpf_verifier_env，
+与linux中大部分源码相似，BPFverifier的头文件位于{\ttfamily linux/include/linux/\\bpf\_verifier.h}，
+原文件位于{\ttfamily linux/kernel/bpf/verifier.c}。头文件中最重要的数据结构为{\ttfamily struct bpf\_verifier\_env}，
 这个数据结构作为verify过程中最核心的结构出现在了源文件相关函数中。此数据结构中包括了程序源码，各个验证流程的状态（通过与否）等，
-后文中的check函数中主要通过传递env变量来进行各级的验证流。而原文件中最重要的函数为bpf_chekc(),
+后文中的{\ttfamily check}函数中主要通过传递{\ttfamily env}变量来进行各级的验证流。而原文件中最重要的函数为{\ttfamily bpf\_chekc()},
 承载了验证bpf安全性的主要功能，包括代码的载入，对代码规模、运行路线、最坏运行时间的分析等各项检查分别在此函数中被调用。
-其中涉及到的最大代码长度、最长运行时间等重要常数通过宏定义的方式定义在此文件或bpf.c中。
+其中涉及到的最大代码长度、最长运行时间等重要常数通过宏定义的方式定义在此文件或{\ttfamily bpf.c}中。
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\columnwidth]{../LvHongtao/pic_2.jpg}
-    \caption{bpf_check函数}
+    \includegraphics[width=0.9\columnwidth]{../LvHongtao/pic_2.jpg}
+    \caption{{\ttfamily bpf\_check}函数}
 \end{figure}
 
 \subsubsection{linux下BPF helper函数与BPF program type的相关分析}
-linux下有关helper函数的主要定义都位于linux/kernel/bpf/helpers.c中，其中对helper函数的格式、类型以及具体的实例有着详细的定义。
-我们在这段源码中发现了诸如__bpf_spin_lock，和mmap抽象存储相关的各种helper函数的具体实现，在后续的工作中，
-我们可以直接将我们需要的helper函数添加在此处来实现我们需要的功能。\\ 
-而有关BPF program type的主要代码都位于linux/include/bpf_types.h中，
-其中定义了常用的诸如BPF_PROG_TYPE_SOCKET_FILTER，BPF_PROG_TYPE_XDP等BPF程序及其相关输入输出参数类型，
+linux下有关{\ttfamily helper}函数的主要定义都位于{\ttfamily linux/kernel/bpf/helpers.c}中，
+其中对{\ttfamily helper}函数的格式、类型以及具体的实例有着详细的定义。
+我们在这段源码中发现了诸如{\ttfamily \_\_bpf\_spin\_lock}，
+和{\ttfamily mmap}抽象存储相关的各种{\ttfamily helper}函数的具体实现，在后续的工作中，
+我们可以直接将我们需要的{\ttfamily helper}函数添加在此处来实现我们需要的功能。\\ 
+而有关BPF program type的主要代码都位于{\ttfamily linux/include/bpf\_types.h}中，
+其中定义了常用的诸如{\ttfamily BPF\_PROG\_TYPE\_SOCKET\_FILTER}，
+{\ttfamily BPF\_PROG\_TYPE\_XDP}等BPF程序及其相关输入输出参数类型，
 这些程序类型的声明方式对我们的代码编写有着重要的指导意义。
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\columnwidth]{../LvHongtao/pic_3.jpg}
-    \caption{bpf_types.h}
+    \includegraphics[width=0.9\columnwidth]{../LvHongtao/pic_3.jpg}
+    \caption{\ttfamily bpf\_types.h}
 \end{figure}
 
 \subsubsection{对内核代码的重编译和加载}
@@ -398,33 +510,39 @@ linux下有关helper函数的主要定义都位于linux/kernel/bpf/helpers.c中�
 
 
 \section{技术路线}
-在现阶段，我们提出了三种具体的实现本项目的路线。
-\subsection{路线一：轻量化bpf沙盒实现方案}
+在现阶段，我们提出了三种具体的实现本项目的路线。我们后续会选择最优的路线。
+\subsection{路线一：轻量化bpf沙盒实现方案}\label{路线一}
 这一路线中，我们希望借鉴docker的隔离结构，尽可能使沙盒本体实现轻量化和高效。
 这一路线中，bpf的运行模式与seccomp中拦截系统调用的做法类似，举例来说我们可以通过使bpf程序拦截用户进程的文件类系统调用，
 将其中的具体目录信息篡改后转发给系统，如将用户进程请求的read C:/root/的访问请求拦截篡改为D:/user/sandbox/ins1/C/root来进行实际的执行，
-通过这种手段可以实现docekr中的fakeroot技术。
+通过这种手段可以实现docker中的fakeroot技术。
 我们希望使用类似的方式在bpf环境下实现docker engine中的各项隔离技术，以实现和docker同等的隔离性，并且可以有望实现更高的安全性和性能。
-优点：实现较为简单，沙盒本体较为轻量化。
-缺点：沙盒层数较少，故一旦被恶意进程攻破会存在着危害主机系统的可能。
 
-\subsection{路线二：bpf内实现进程虚拟化}
+\textbf{优点：}实现较为简单，沙盒本体较为轻量化。
+
+\textbf{缺点：}沙盒层数较少，故一旦被恶意进程攻破会存在着危害主机系统的可能。
+
+\subsection{路线二：bpf内实现进程虚拟化}\label{路线二}
 这一路线中，我们希望借鉴gVisor的多层沙盒结构，尽可能使沙盒本体实现最大化的安全性和相对gVisor更高的运行效率
 gVisor维护了一套虚拟化的内核服务，例如沙盒内的局部文件系统。这种结构设计比路线一可以实现更好的安全性，
 恶意进程将难以同时捕捉到局部文件系统和主机文件系统的漏洞，从而增大其污染主机系统的难度。
 本路线中我们希望在bpf中实现局部的文件系统或局部的动态装载器等系统服务，这种方式能够实现更加完备的隔离性，减少沙盒与主机系统的实际交互。
 使用bpf结构可以比gvisor更加容易和高效的捕捉拦截转发沙盒进程的系统调用，同时bpf结构几乎没有被篡改代码内容的危险，
 从而实现了比gvisor更进一步的安全性。
-优点：最大化的安全性，比gVisor等同类原理沙盒更高的效率。
-缺点：体量较大，实现复杂度高。
 
-\subsection{路线三：bpf优化用户态沙盒}
+\textbf{优点：}最大化的安全性，比gVisor等同类原理沙盒更高的效率。
+
+\textbf{缺点：}体量较大，实现复杂度高。
+
+\subsection{路线三：bpf优化用户态沙盒}\label{路线三}
 这一路线为备选路线，当对内核bpf模块修改失败后会转为使用此路线。
 这一路线依据于gVisor等用户态沙盒会在劫持系统调用过程中损失大量的性能这一特征。BPF可以作为优秀的监控拦截模块，
 使用现有的BPF框架即可高效简单的实现gVisor中需要的劫持系统调用这一步骤，可以同时优化gVisor的性能与安全性，
 选择此路线时我们将选择某个现有的用户态沙盒应用，着手使用bpf结构优化其中的部分功能。
-优点：代码难度较低。
-缺点：相较现有的成熟解决方案缺少突破性的创新，无法做到根本性的优化。
+
+\textbf{优点：}代码难度较低。
+
+\textbf{缺点：}相较现有的成熟解决方案缺少突破性的创新，无法做到根本性的优化。
 
 
 
@@ -432,10 +550,10 @@ gVisor维护了一套虚拟化的内核服务，例如沙盒内的局部文件�
 \bibliography{../paper.bib}
 \bibliographystyle{ieeetr}
 
-\section{附录}
+% \section{附录}
 
-\subsection{seccomp完整输出结果}
+% \subsection{seccomp完整输出结果}
 
-\lstinputlisting[style=bash,caption=seccomp程序执行结果,label=seccomp完整]{../LiangHengyu/seccompout.txt}
+% \lstinputlisting[style=bash,caption=seccomp程序执行结果,label=seccomp完整]{../LiangHengyu/seccompout.txt}
 
 \end{document}
