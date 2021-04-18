@@ -217,7 +217,10 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
     运行在沙盒内的时候系统中会出现若干特征性的监控类设备驱动，
     当发现自己运行在沙盒中时，木马将停止活动以防止自己被安全人员监测出来。
 \end{itemize}
-此分析给我们带来了如下的提示
+
+\subsubsection{小结}
+
+此分析给我们带来了如下的提示：
 \begin{itemize}
     \item 针对某个具体的漏洞来设计沙盒是不切实际的，随着系统体量的膨胀，
     漏洞的存在是不可避免的，至今linux和windows也无法完全杜绝对系统代码的恶意篡改。
@@ -418,6 +421,48 @@ BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编�
 
 可以看到，每当一个系统中有新的程序开始执行时，该BPF程序就会被调用，并输出一个{\ttfamily Hello World!}。
 
+\subsubsection{探针}
+
+BPF程序可用于跟踪可执行文件中的某个符号是否被执行。
+
+例如，我们使用这样一个简单的{\ttfamily Hello World!}程序进行测试：
+
+\lstinputlisting[style=C,caption={\ttfamily Hello World!}程序]{../LiangHengyu/uprobe/test.c}
+
+使用{\ttfamily nm}工具可看到可执行文件中包含的符号（有省略）：
+
+\lstinputlisting[style=bash,caption=符号表]{../LiangHengyu/uprobe/symbols.txt}
+
+{\ttfamily Hello World!}程序被命名为“test”，我们跟踪它的{\ttfamily main}符号，
+跟踪程序如下：
+
+\lstinputlisting[style=Python,caption=符号跟踪程序]{../LiangHengyu/uprobe/example.py}
+
+{\ttfamily bpf.attach\_uprobe}中的{\ttfamily name}和{\ttfamily sym}即为要跟踪的程序和要跟踪的符号。
+运行程序三次，每次运行都会有相应的跟踪结果出现：
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{../LiangHengyu/uprobe/test.png}
+    \caption{符号跟踪结果}
+\end{figure}
+
+对{\ttfamily test}程序进行修改，让程序根据输入的数字决定执行的函数：
+
+\lstinputlisting[style=C,caption=修改后程序]{../LiangHengyu/uprobe/test_new.c}
+
+此时该程序具有{\ttfamily main}、{\ttfamily even}和{\ttfamily odd}三个符号。
+
+\lstinputlisting[style=bash,caption=符号表]{../LiangHengyu/uprobe/symbols_test.txt}
+
+我们对{\ttfamily even}符号进行跟踪，此时，当且仅当输入偶数时，BPF才会被触发，显示如下结果：
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{../LiangHengyu/uprobe/even.png}
+    \caption{符号跟踪结果}
+\end{figure}
+
 \subsubsection{seccomp实现控制系统调用}
 
 我们编写的seccomp程序实际上是一种“过滤器”，类似“正则表达式”。
@@ -433,7 +478,7 @@ seccomp在头文件{\ttfamily <linux/seccomp.h>}中定义了有限的一些控�
 
 这里有如下的一个示例程序，这个程序会拒绝被调用程序的所有和写相关的系统调用。
 
-\lstinputlisting[style=C,caption=BPF加载程序]{../LiangHengyu/seccomp/main.c}
+\lstinputlisting[style=C,caption=seccomp程序]{../LiangHengyu/seccomp/main.c}
 
 编译好这个程序，我们使用这个程序调用一个需要进行写操作的程序{\ttfamily ls}，
 同时我们还需要使用{\ttfamily strace}来跟踪{\ttfamily ls}所有的系统调用。
@@ -450,7 +495,8 @@ seccomp在头文件{\ttfamily <linux/seccomp.h>}中定义了有限的一些控�
 
 \subsubsection{小结}
 
-BPF程序能高效成为一个内核中的profiler，这是我们接下来将引出的路线一（见\ref{路线一}）或路线三（见\ref{路线三}）的主要技术依据，
+BPF提供了非常多的跟踪功能，它能高效成为一个内核中的profiler，
+这是我们接下来将引出的路线一（见\ref{路线一}）或路线三（见\ref{路线三}）的主要技术依据，
 在后文中会对技术依据进行更详细的解释。
 
 但是我们也能注意到，类似seccomp的BPF安全应用有非常大的局限性。
@@ -517,10 +563,8 @@ linux下有关{\ttfamily helper}函数的主要定义都位于{\ttfamily linux/k
 这一路线中，bpf的运行模式与seccomp中拦截系统调用的做法类似，举例来说我们可以通过使bpf程序拦截用户进程的文件类系统调用，
 将其中的具体目录信息篡改后转发给系统，如将用户进程请求的read C:/root/的访问请求拦截篡改为D:/user/sandbox/ins1/C/root来进行实际的执行，
 通过这种手段可以实现docker中的fakeroot技术。
-我们希望使用类似的方式在bpf环境下实现docker engine中的各项隔离技术，以实现和docker同等的隔离性，并且可以有望实现更高的安全性和性能。
-
-\textbf{优点：}实现较为简单，沙盒本体较为轻量化。
-
+我们希望使用类似的方式在bpf环境下实现docker engine中的各项隔离技术，以实现和docker同等的隔离性，并且可以有望实现更高的安全性和性能。\\
+\textbf{优点：}实现较为简单，沙盒本体较为轻量化。\\
 \textbf{缺点：}沙盒层数较少，故一旦被恶意进程攻破会存在着危害主机系统的可能。
 
 \subsection{路线二：bpf内实现进程虚拟化}\label{路线二}
@@ -529,20 +573,16 @@ gVisor维护了一套虚拟化的内核服务，例如沙盒内的局部文件�
 恶意进程将难以同时捕捉到局部文件系统和主机文件系统的漏洞，从而增大其污染主机系统的难度。
 本路线中我们希望在bpf中实现局部的文件系统或局部的动态装载器等系统服务，这种方式能够实现更加完备的隔离性，减少沙盒与主机系统的实际交互。
 使用bpf结构可以比gvisor更加容易和高效的捕捉拦截转发沙盒进程的系统调用，同时bpf结构几乎没有被篡改代码内容的危险，
-从而实现了比gvisor更进一步的安全性。
-
-\textbf{优点：}最大化的安全性，比gVisor等同类原理沙盒更高的效率。
-
+从而实现了比gvisor更进一步的安全性。\\
+\textbf{优点：}最大化的安全性，比gVisor等同类原理沙盒更高的效率。\\
 \textbf{缺点：}体量较大，实现复杂度高。
 
 \subsection{路线三：bpf优化用户态沙盒}\label{路线三}
 这一路线为备选路线，当对内核bpf模块修改失败后会转为使用此路线。
 这一路线依据于gVisor等用户态沙盒会在劫持系统调用过程中损失大量的性能这一特征。BPF可以作为优秀的监控拦截模块，
 使用现有的BPF框架即可高效简单的实现gVisor中需要的劫持系统调用这一步骤，可以同时优化gVisor的性能与安全性，
-选择此路线时我们将选择某个现有的用户态沙盒应用，着手使用bpf结构优化其中的部分功能。
-
-\textbf{优点：}代码难度较低。
-
+选择此路线时我们将选择某个现有的用户态沙盒应用，着手使用bpf结构优化其中的部分功能。\\
+\textbf{优点：}代码难度较低。\\
 \textbf{缺点：}相较现有的成熟解决方案缺少突破性的创新，无法做到根本性的优化。
 
 
