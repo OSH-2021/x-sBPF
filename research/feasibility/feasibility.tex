@@ -181,7 +181,7 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
 
 \subsubsection{经典攻击方法}
 
-在这篇文章\cite{di2015elf}中介绍了几种经典的恶意进程攻击手段：
+在这几篇文章\cite{di2015elf} \cite{rieck2008learning}中介绍了几种经典的恶意进程攻击手段：
 
 \begin{itemize}
     \item 操作系统中的一个用户态组件——动态装载器，
@@ -228,6 +228,7 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
 
 
 \subsection{docker安全}
+下面是docker安全性的具体实现方式\cite{boettiger2015introduction} \cite{rad2017introduction}
 
 \begin{enumerate}
     \item 通过namespace，不同docker容器无法访问其他的进程，
@@ -256,7 +257,7 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
     并且把不同文件夹的内容映射到同一个文件目录内。似乎是docker的重要组成部分。
 \end{enumerate}
 
-在这篇文章中，分析了类似于docker的结构的安全性：\cite{bui2015analysis}
+在这篇文章中，分析了docker结构的安全性：\cite{bui2015analysis}
 
 \begin{itemize}
     \item 文章基于的模型如下：当hostOS中运行的docker容器中有一部分被恶意进程完全控制了，
@@ -279,7 +280,7 @@ Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
 
 \subsubsection{macOS沙盒的权限设置}
 
-macOS沙盒中有如下的权限设置：
+macOS沙盒中有如下的权限设置\cite{hoog2011iphone}：
 
 \begin{itemize}
     \item Essentials：是否使用访问控制技术
