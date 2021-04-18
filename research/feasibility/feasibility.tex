@@ -164,54 +164,24 @@
 
 \subsection{恶意进程}
 
-\subsubsection{恶意进程行为}
-
-以下是一个木马行为的分析：\cite{ZeuS2018}
-
-\begin{itemize}
-    \item 此木马功能非常丰富，包括使用VNC远程桌面控制电脑，截屏并发送，
-    读取本地数据并发送，读取用户所有操作并发送，通过注册表开机自动启动，
-    监测是否处于沙盒环境并且在沙盒中自动停止活动，监测注册表以防止自己的自动启动被清除。
-
-    \item 此木马通过邮件分发，邮件中包含一个doc文件链接，
-    打开后offic会提示需要启用宏来查看完整信息，
-    启用宏后此木马会自动解码并且将自己复制进svchost.exe
-    （windows下用于加载动态链接库的通用进程），然后会开始运行各种功能，
-    包括剩余模块的下载，劫持浏览器，窃取本地数据等。
-    
-    \item 木马通过读取进程列表以判断是否有正在打开的浏览器，
-    然后当存在浏览器的时其会通过浏览器的安全漏洞劫持网页，
-    修改用户正在访问的银行网页，截取其输入的密码、账号、pin、等内容并且发送给服务器。
-    
-    \item 此类木马对沙盒有有特殊的监测机制，
-    运行在沙盒内的时候系统中会出现若干特征性的监控类设备驱动，
-    当发现自己运行在沙盒中时，木马停止活动以防止自己被安全人员监测出来。
-    
-    \item 抵御此木马需要的安全措施包括如下：
-    这个木马基本上都各种层面上利用了windows莫名其妙的安全漏洞，
-    office的漏洞这么多年没有得到好好的处理，
-    svchost对动态链接库的调用机制决定了这个玩意很可能难以简单的处理。
-    其对应的解决方案可能只有虚拟化内核并且将局部的svchost或注册表暴露给恶意进程，
-    可能核心是需要考虑如何隐藏沙盒环境的特征。
-\end{itemize}
-
 \subsubsection{linux下的恶意进程}
 
-Linux环境下的常见病毒有：\cite{LinuxVirus2020}
+Linux环境下的经典病毒种类有：\cite{LinuxVirus2020}
 
 \begin{itemize}
-    \item BillGates DDOS攻击
+    \item BillGates 基于僵尸网络的DDOS攻击
     \item DDG 蠕虫式挖矿
     \item SystemdMiner 蠕虫式挖矿
     \item StartMiner 蠕虫式挖矿
-    \item WatchdogsMiner 挖矿
-    \item XorDDos 传播感染的机器构成僵尸网络，用于DDos
-    \item RainbowMiner 挖矿
+    \item WatchdogsMiner 蠕虫式挖矿
+    \item XorDDos 基于僵尸网络的DDOS攻击
+    \item RainbowMiner 蠕虫式挖矿
 \end{itemize}
+
 
 \subsubsection{经典攻击方法}
 
-在这篇文章\cite{di2015elf}中介绍了几种经典的攻击方法：
+在这篇文章\cite{di2015elf}中介绍了几种经典的恶意进程攻击手段：
 
 \begin{itemize}
     \item 操作系统中的一个用户态组件——动态装载器，
@@ -222,10 +192,40 @@ Linux环境下的常见病毒有：\cite{LinuxVirus2020}
     \item 早期的栈溢出利用依赖于向缓冲区中注入二进制代码(称为shellcode)的能力，
     并需要覆盖在栈上的一个返回地址使其指向这个缓冲区。随后，当程序从当前函数返回时，
     执行流就会被重定向到攻击者的shellcode，接着攻击者就能取得程序的控制权。
-    \item 动态装载器是一个用户执行环境的组件，
-    它能够帮助在开始时加载应用需要的库并解析库导出的动态符号（函数和全局变量）供应用程序使用。
-    在这一节中，我们将会阐述动态符号解析的过程在基于ELF的系统上是如何工作的。
+    
 \end{itemize}
+
+\subsubsection{恶意进程行为}
+
+卡巴斯基安全实验室在对一个新型zeus变种木马的报告中给出了如下的分析：\cite{ZeuS2018}
+
+\begin{itemize}
+    \item 此木马功能非常丰富，包括使用VNC远程桌面控制电脑，截屏并发送，
+    读取本地数据并发送，读取用户所有操作并发送，通过注册表开机自动启动，
+    监测是否处于沙盒环境并且在沙盒中自动停止活动，监测注册表以防止自己的自动启动被清除。
+
+    \item 此木马的传播主要通过邮件，在恶意邮件中包含一个doc文件作为附件，
+    打开后offic会提示需要启用宏来查看完整信息，
+    一旦用户点击启用宏后，此木马会自动解码并且将自己复制进svchost.exe
+    ，然后其遍可以开始运行各种功能，包括剩余模块的下载，劫持浏览器，窃取本地数据等。
+    
+    \item 此木马通过读取进程列表以判断是否有正在打开的浏览器，
+    然后当存在浏览器的时其会通过浏览器的安全漏洞劫持网页，
+    修改用户正在访问的银行网页，截取其输入的密码、账号、pin、等内容并且发送给服务器。
+    
+    \item 此木马对沙盒有有特殊的监测机制，
+    运行在沙盒内的时候系统中会出现若干特征性的监控类设备驱动，
+    当发现自己运行在沙盒中时，木马将停止活动以防止自己被安全人员监测出来。
+\end{itemize}
+此分析给我们带来了如下的提示
+\begin{itemize}
+    \item 针对某个具体的漏洞来设计沙盒是不切实际的，随着系统体量的膨胀，
+    漏洞的存在是不可避免的，至今linux和windows也无法完全杜绝对系统代码的恶意篡改。
+    \item 各类资源的隔离对于沙盒的安全性至关重要，必须确保沙盒内的进程只能访问有限的文件服务或者系统服务。
+    \item 任何需要与被隔离进程直接交互的服务都有被污染的可能，
+    因此多层的隔离或者使用类似于BPF的无法污染的实现方式可以有效的提高对恶意进程的控制力度。
+\end{itemize}
+
 
 \subsection{docker安全}
 
@@ -263,12 +263,12 @@ Linux环境下的常见病毒有：\cite{LinuxVirus2020}
     其可以对系统进行如下的攻击如Denial-of-Service 和 Privilege escalation。
     \item 为了在这种情况下保护系统安全，容器应当做到如下几点：
     \begin{itemize}
-        \item process isolation
-        \item filesystem isolation
-        \item device isolation
-        \item IPC isolation
-        \item network isolation
-        \item limiting of resources
+        \item process isolation 进程间的隔离
+        \item filesystem isolation  文件系统的隔离
+        \item device isolation  设备的隔离
+        \item IPC isolation 进程间通讯的隔离
+        \item network isolation 网络的隔离
+        \item limiting of resources 限制资源的使用量
     \end{itemize}
 \end{itemize}
 
