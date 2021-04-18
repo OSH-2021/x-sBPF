@@ -184,8 +184,22 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
   - 动态装载器是一个用户执行环境的组件，它能够帮助在开始时加载应用需要的库并解析库导出的动态符号(函数和全局变量)供应用程序使用。在这一节中，我们将会阐述动态符号解析的过程在基于ELF的系统上是如何工作的 [33]
 
 
-
 - 三条技术路线
   - 在seccomp结构上优化制作更好的系统调用的拦截和判断机制，实现只通过一个简单的过滤器就能保证较强安全性的轻量级安全沙盒。
   - 尝试将一个基于虚拟化技术的安全沙盒通过bpf程序的方式制作出来并且诸如OS内运行，可能需要修改现有的ebpf认证与导入机制。
   - 仅将bpf程序作为劫持和修改系统调用的小模块，将其结合到某个现有的用户态沙盒中，从而优化某个用户态沙盒应用的效率
+
+
+## 4月15日
+- Open Container Initiative（OCI） 为docker和gvisor之类的容器技术所支持的接口
+
+
+## 4月16日
+- 对linux源码的阅读结果
+  - verifier的主要代码位于linux/kernel/bpf/verifier.c
+  - 我们计划进行简单修改的MAXSIZE项来自于linux/kernel/bpf/bpf.c
+  - 
+
+
+- https://www.zhihu.com/question/25357707 如何修改linux
+- https://xz.aliyun.com/t/8482 linux kernel bpf模块的漏洞和其利用方式。
