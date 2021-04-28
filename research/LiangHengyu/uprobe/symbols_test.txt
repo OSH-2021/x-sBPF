@@ -1,0 +1,18 @@
+                 U abort@@GLIBC_2.17
+0000000000011018 B __bss_end__
+0000000000011018 B _bss_end__
+...
+0000000000011018 B _end
+00000000000008ac T even
+00000000000009d4 T _fini
+0000000000000888 t frame_dummy
+...
+                 U __libc_start_main@@GLIBC_2.17
+00000000000008cc T main
+000000000000088c T odd
+                 U puts@@GLIBC_2.17
+0000000000000800 t register_tm_clones
+                 U __stack_chk_fail@@GLIBC_2.17
+                 U __stack_chk_guard@@GLIBC_2.17
+0000000000000780 T _start
+0000000000011010 D __TMC_END__
