@@ -1,4 +1,4 @@
-\documentclass[UTF8,aspectratio=169,fontset=macnew,xcolor=table]{ctexbeamer}
+\documentclass[UTF8,fontset=macnew,xcolor=table]{ctexbeamer}
 \usepackage{indentfirst}
 \usepackage{color}
 \usepackage{xcolor}
@@ -164,7 +164,7 @@ rulesepcolor=\color{red!20!green!20!blue!20},
 \begin{frame}
     \begin{columns}
         \begin{column}{0.3\textwidth}
-            \begin{block}{恶意进程}
+            {\footnotesize \begin{block}{恶意进程}
                 \begin{enumerate}
                     \item Social Engineering
                     \item 栈溢出攻击
@@ -176,11 +176,11 @@ rulesepcolor=\color{red!20!green!20!blue!20},
                     \item 强行植入VNC远程桌面
                     \item 僵尸网络
                 \end{enumerate}
-            \end{block}
+            \end{block}}
         \end{column}
     
         \begin{column}{0.3\textwidth}
-            \begin{block}{沙盒}
+            {\footnotesize \begin{block}{沙盒}
                 \begin{enumerate}
                     \item 局部系统服务
                     \item 检查内存访问
@@ -190,18 +190,18 @@ rulesepcolor=\color{red!20!green!20!blue!20},
                     \item 限制资源使用量
                     \item 难以感知的监控
                 \end{enumerate}
-            \end{block}
+            \end{block}}
         \end{column}
 
         \begin{column}{0.3\textwidth}
-            \begin{block}{eBPF在沙盒应用的意义}
+            {\footnotesize \begin{block}{eBPF在沙盒应用的意义}
                 \begin{enumerate}
                     \item BPF程序能简单的给内核增加新的安全特性并且易于升级
                     \item 只读代码段不可篡改性不会增加安全漏洞
                     \item 使用BPF可以高效获取资源使用量（现有解决方案）
                     \item 利用钩子直接劫持系统调用，高效且难以被察觉
                 \end{enumerate}
-            \end{block}
+            \end{block}}
         \end{column}
     \end{columns}
 \end{frame}
