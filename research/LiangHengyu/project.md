@@ -922,9 +922,212 @@ BPF_CALL  0x80  /* eBPF BPF_JMP only: function call */
 ```
 找出之前的代码，发现helper函数为`bpf_trace_printk`，刚好能对应上后面helper函数介绍中的第6个（注意到汇编中也是`call 6`，不知道是不是巧合）。
 ## seccomp
+### 源代码解析
 `seccomp`实际上也属于一种系统调用，编号为317。
+```C
+#include <linux/seccomp.h>
+#include <linux/filter.h>
+#include <linux/audit.h>
+#include <linux/signal.h>
+#include <sys/ptrace.h>
+int seccomp(unsigned int operation, unsigned int flags, void *args);
+```
+在`kernel/seccomp.c`中，`secccomp`系统调用的实现：
+```C
+SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
+			 void __user *, uargs)
+{
+	return do_seccomp(op, flags, uargs);
+}
+```
+继续观察`do_seccomp`函数：
+```C
+/* Common entry point for both prctl and syscall. */
+static long do_seccomp(unsigned int op, unsigned int flags,
+		       void __user *uargs)
+{
+	switch (op) {
+	case SECCOMP_SET_MODE_STRICT:
+		if (flags != 0 || uargs != NULL)
+			return -EINVAL;
+		return seccomp_set_mode_strict();
+	case SECCOMP_SET_MODE_FILTER:
+		return seccomp_set_mode_filter(flags, uargs);
+	case SECCOMP_GET_ACTION_AVAIL:
+		if (flags != 0)
+			return -EINVAL;
+
+		return seccomp_get_action_avail(uargs);
+	case SECCOMP_GET_NOTIF_SIZES:
+		if (flags != 0)
+			return -EINVAL;
+
+		return seccomp_get_notif_sizes(uargs);
+	default:
+		return -EINVAL;
+	}
+}
+```
+`SECCOMP_SET_MODE_STRICT`的实现：
+```C
+/**
+ * seccomp_set_mode_strict: internal function for setting strict seccomp
+ *
+ * Once current->seccomp.mode is non-zero, it may not be changed.
+ *
+ * Returns 0 on success or -EINVAL on failure.
+ */
+static long seccomp_set_mode_strict(void)
+{
+	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
+	long ret = -EINVAL;
+
+	spin_lock_irq(&current->sighand->siglock);
+
+	if (!seccomp_may_assign_mode(seccomp_mode))
+		goto out;
+
+#ifdef TIF_NOTSC
+	disable_TSC();
+#endif
+	seccomp_assign_mode(current, seccomp_mode, 0);
+	ret = 0;
+
+out:
+	spin_unlock_irq(&current->sighand->siglock);
+
+	return ret;
+}
+```
+`SECCOMP_SET_MODE_FILTER`的实现
+```C
+/**
+ * seccomp_set_mode_filter: internal function for setting seccomp filter
+ * @flags:  flags to change filter behavior
+ * @filter: struct sock_fprog containing filter
+ *
+ * This function may be called repeatedly to install additional filters.
+ * Every filter successfully installed will be evaluated (in reverse order)
+ * for each system call the task makes.
+ *
+ * Once current->seccomp.mode is non-zero, it may not be changed.
+ *
+ * Returns 0 on success or -EINVAL on failure.
+ */
+static long seccomp_set_mode_filter(unsigned int flags,
+				    const char __user *filter)
+{
+	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
+	struct seccomp_filter *prepared = NULL;
+	long ret = -EINVAL;
+	int listener = -1;
+	struct file *listener_f = NULL;
+
+	/* Validate flags. */
+	if (flags & ~SECCOMP_FILTER_FLAG_MASK)
+		return -EINVAL;
+
+	/*
+	 * In the successful case, NEW_LISTENER returns the new listener fd.
+	 * But in the failure case, TSYNC returns the thread that died. If you
+	 * combine these two flags, there's no way to tell whether something
+	 * succeeded or failed. So, let's disallow this combination.
+	 */
+	if ((flags & SECCOMP_FILTER_FLAG_TSYNC) &&
+	    (flags & SECCOMP_FILTER_FLAG_NEW_LISTENER))
+		return -EINVAL;
+
+	/* Prepare the new filter before holding any locks. */
+	prepared = seccomp_prepare_user_filter(filter);
+	if (IS_ERR(prepared))
+		return PTR_ERR(prepared);
+
+	if (flags & SECCOMP_FILTER_FLAG_NEW_LISTENER) {
+		listener = get_unused_fd_flags(O_CLOEXEC);
+		if (listener < 0) {
+			ret = listener;
+			goto out_free;
+		}
+
+		listener_f = init_listener(prepared);
+		if (IS_ERR(listener_f)) {
+			put_unused_fd(listener);
+			ret = PTR_ERR(listener_f);
+			goto out_free;
+		}
+	}
+
+	/*
+	 * Make sure we cannot change seccomp or nnp state via TSYNC
+	 * while another thread is in the middle of calling exec.
+	 */
+	if (flags & SECCOMP_FILTER_FLAG_TSYNC &&
+	    mutex_lock_killable(&current->signal->cred_guard_mutex))
+		goto out_put_fd;
+
+	spin_lock_irq(&current->sighand->siglock);
+
+	if (!seccomp_may_assign_mode(seccomp_mode))
+		goto out;
+
+	if (has_duplicate_listener(prepared)) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	ret = seccomp_attach_filter(flags, prepared);
+	if (ret)
+		goto out;
+	/* Do not free the successfully attached filter. */
+	prepared = NULL;
+
+	seccomp_assign_mode(current, seccomp_mode, flags);
+out:
+	spin_unlock_irq(&current->sighand->siglock);
+	if (flags & SECCOMP_FILTER_FLAG_TSYNC)
+		mutex_unlock(&current->signal->cred_guard_mutex);
+out_put_fd:
+	if (flags & SECCOMP_FILTER_FLAG_NEW_LISTENER) {
+		if (ret) {
+			listener_f->private_data = NULL;
+			fput(listener_f);
+			put_unused_fd(listener);
+		} else {
+			fd_install(listener, listener_f);
+			ret = listener;
+		}
+	}
+out_free:
+	seccomp_filter_free(prepared);
+	return ret;
+}
+```
+在两种模式中都使用到的函数`seccomp_assign_mode`为：
+```C
+static inline void seccomp_assign_mode(struct task_struct *task,
+				       unsigned long seccomp_mode,
+				       unsigned long flags)
+{
+	assert_spin_locked(&task->sighand->siglock);
+
+	task->seccomp.mode = seccomp_mode;
+	/*
+	 * Make sure TIF_SECCOMP cannot be set before the mode (and
+	 * filter) is set.
+	 */
+	smp_mb__before_atomic();
+	/* Assume default seccomp processes want spec flaw mitigation. */
+	if ((flags & SECCOMP_FILTER_FLAG_SPEC_ALLOW) == 0)
+		arch_seccomp_spec_mitigate(task);
+	set_tsk_thread_flag(task, TIF_SECCOMP);
+}
+```
+### 作用
+`seccomp`的作用是，只对一个特定程序暴露有限的系统调用。对大部分程序来说，只会用到Linux中上百种系统调用中的少部分系统调用，可以通过限制程序访问系统调用的方法增加系统的安全性。
+### seccomp与BPF的关系
+在`seccomp`的一种工作模式下，可以使用BPF来自定义过滤规则。
 ### 注意⚠️
-设置`seccomp`不是只能使用`seccomp`系统调用才行，也可以使用`prctl`系统调用。
+设置`seccomp`不是只能使用`seccomp`系统调用才行，也可以使用`prctl`系统调用。但是`prctl`提供的和`seccomp`相关的功能只是`seccomp`的一个子集。
 ```C
 #include <sys/prctl.h>
 int prctl(int option, unsigned long arg2, unsigned long arg3,
@@ -934,6 +1137,34 @@ int prctl(int option, unsigned long arg2, unsigned long arg3,
 ```bash
 prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)  = 0
 prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, {len=6, filter=0xffffc6b535a0}) = 0
+```
+### operation选项
+```C
+/* Valid operations for seccomp syscall. */
+#define SECCOMP_SET_MODE_STRICT		0
+#define SECCOMP_SET_MODE_FILTER		1
+#define SECCOMP_GET_ACTION_AVAIL	2
+#define SECCOMP_GET_NOTIF_SIZES		3
+```
+`SECCOMP_SET_MODE_STRICT`只允许程序运行极少数系统调用。调用时`flag`为0，`args`为NULL。
+
+`SECCOMP_SET_MODE_FILTER`使用BPF编写的过滤规则对程序进行过滤。
+#### `SECCOMP_SET_MODE_FILTER`的flags与args
+`args`指向一个`struct sock_fprog`结构体，该结构体的声明如下：
+```C
+struct sock_fprog {
+    unsigned short      len;    /* Number of BPF instructions */
+    struct sock_filter *filter; /* Pointer to array of
+                                    BPF instructions */
+};
+```
+以下是`flag`声明：
+```C
+/* Valid flags for SECCOMP_SET_MODE_FILTER */
+#define SECCOMP_FILTER_FLAG_TSYNC		(1UL << 0)
+#define SECCOMP_FILTER_FLAG_LOG			(1UL << 1)
+#define SECCOMP_FILTER_FLAG_SPEC_ALLOW		(1UL << 2)
+#define SECCOMP_FILTER_FLAG_NEW_LISTENER	(1UL << 3)
 ```
 ## BPF helper函数介绍
 后面再做整理。
