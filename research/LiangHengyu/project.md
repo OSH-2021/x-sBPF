@@ -3411,3 +3411,31 @@ helper函数的定义在Linux源代码`tools/testing/selftests/bpf`中出现过�
  *		**-EPROTONOSUPPORT** IP packet version is not 4 or 6
  */
  ```
+
+# 修改内核
+## 测试
+找到`bpf`系统调用源代码，位于`kernel/bpf/syscall.c`：
+```C
+SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
+{
+	printk(KERN_INFO "Load BPF program!\n");
+
+	union bpf_attr attr;
+	int err;
+
+	if (sysctl_unprivileged_bpf_disabled && !bpf_capable())
+		return -EPERM;
+
+	err = bpf_check_uarg_tail_zero(uattr, sizeof(attr), size);
+	if (err)
+		return err;
+	size = min_t(u32, size, sizeof(attr));
+	...
+}
+```
+![code](kernel_test/code.png)
+在其中新增一行`printk`，保存修改。随后编译内核，替换现有内核，启动后使用`dmesg`查看内核信息，可以看到如下的消息：
+![kernel](kernel_test/dmesg_1.png)
+这里显示的是在内核启动的时候运行的BPF程序打印的信息。如果运行之前编写的BPF程序，可以看到下面的消息：
+![kernel](kernel_test/dmesg_2.png)
+可以说明内核的修改是成功的。
