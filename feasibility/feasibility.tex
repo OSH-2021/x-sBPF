@@ -316,12 +316,12 @@ macOS沙盒中有如下的权限设置\cite{hoog2011iphone}：
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\columnwidth]{../ChenSirui/MacOS Sandbox/Sandbox_Structure.PNG}
+    \includegraphics[width=0.92\columnwidth]{Sandbox_Structure.PNG}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\columnwidth]{../ChenSirui/MacOS Sandbox/Sandbox_Process.png}
+    \includegraphics[width=0.92\columnwidth]{Sandbox_Process.png}
     \caption{沙盒机制\cite{blazakis2011apple}}
 \end{figure}
 
@@ -399,23 +399,23 @@ BPF内核程序需要编译成BPF内核字节码，用户态程序只需要编�
 
 加载进内核的程序可以使用C代码编写，示例C代码如下：
 
-\lstinputlisting[style=C,caption=BPF内核程序代码]{../LiangHengyu/hello_world/bpf_program.c}
+\lstinputlisting[style=C,caption=BPF内核程序代码]{hello_world/bpf_program.c}
 
 程序被设置为在其他程序开始执行时被调用，并输出“Hello World!”。
 
 它将被编译成字节码：
 
-\lstinputlisting[style=C,caption=BPF字节码]{../LiangHengyu/hello_world/bpf_program_asm.txt}
+\lstinputlisting[style=C,caption=BPF字节码]{hello_world/bpf_program_asm.txt}
 
 用户态的加载程序如下，它基本上只起一个加载BPF程序的作用：
 
-\lstinputlisting[style=C,caption=BPF加载程序]{../LiangHengyu/hello_world/loader.c}
+\lstinputlisting[style=C,caption=BPF加载程序]{hello_world/loader.c}
 
 执行BPF程序，需要以管理员身份调用该加载程序。程序的执行效果如下图所示：
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\columnwidth]{../LiangHengyu/hello_world/test1.png}
+    \includegraphics[width=0.7\columnwidth]{hello_world/test1.png}
     \caption{示例程序执行效果}
 \end{figure}
 
@@ -427,39 +427,39 @@ BPF程序可用于跟踪可执行文件中的某个符号是否被执行。
 
 例如，我们使用这样一个简单的{\ttfamily Hello World!}程序进行测试：
 
-\lstinputlisting[style=C,caption={\ttfamily Hello World!}程序]{../LiangHengyu/uprobe/test.c}
+\lstinputlisting[style=C,caption={\ttfamily Hello World!}程序]{uprobe/test.c}
 
 使用{\ttfamily nm}工具可看到可执行文件中包含的符号（有省略）：
 
-\lstinputlisting[style=bash,caption=符号表]{../LiangHengyu/uprobe/symbols.txt}
+\lstinputlisting[style=bash,caption=符号表]{uprobe/symbols.txt}
 
 {\ttfamily Hello World!}程序被命名为“test”，我们跟踪它的{\ttfamily main}符号，
 跟踪程序如下：
 
-\lstinputlisting[style=Python,caption=符号跟踪程序]{../LiangHengyu/uprobe/example.py}
+\lstinputlisting[style=Python,caption=符号跟踪程序]{uprobe/example.py}
 
 {\ttfamily bpf.attach\_uprobe}中的{\ttfamily name}和{\ttfamily sym}即为要跟踪的程序和要跟踪的符号。
 运行程序三次，每次运行都会有相应的跟踪结果出现：
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\columnwidth]{../LiangHengyu/uprobe/test.png}
+    \includegraphics[width=\columnwidth]{uprobe/test.png}
     \caption{符号跟踪结果}
 \end{figure}
 
 对{\ttfamily test}程序进行修改，让程序根据输入的数字决定执行的函数：
 
-\lstinputlisting[style=C,caption=修改后程序]{../LiangHengyu/uprobe/test_new.c}
+\lstinputlisting[style=C,caption=修改后程序]{uprobe/test_new.c}
 
 此时该程序具有{\ttfamily main}、{\ttfamily even}和{\ttfamily odd}三个符号。
 
-\lstinputlisting[style=bash,caption=符号表]{../LiangHengyu/uprobe/symbols_test.txt}
+\lstinputlisting[style=bash,caption=符号表]{uprobe/symbols_test.txt}
 
 我们对{\ttfamily even}符号进行跟踪，此时，当且仅当输入偶数时，BPF才会被触发，显示如下结果：
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\columnwidth]{../LiangHengyu/uprobe/even.png}
+    \includegraphics[width=\columnwidth]{uprobe/even.png}
     \caption{符号跟踪结果}
 \end{figure}
 
@@ -471,20 +471,20 @@ BPF程序可用于跟踪可执行文件中的某个符号是否被执行。
 
 seccomp在头文件{\ttfamily <linux/seccomp.h>}中定义了有限的一些控制被监控的进程的操作。
 
-\lstinputlisting[style=C,caption=seccomp头文件]{../LiangHengyu/seccomp/seccomp_part.h}
+\lstinputlisting[style=C,caption=seccomp头文件]{seccomp/seccomp_part.h}
 
 例如，使用{\ttfamily SECCOMP\_RET\_KILL\_PROCESS}会关闭该程序，
 使用{\ttfamily SECCOMP\_RET\_ERRNO}会拒绝该程序相关的系统调用。
 
 这里有如下的一个示例程序，这个程序会拒绝被调用程序的所有和写相关的系统调用。
 
-\lstinputlisting[style=C,caption=seccomp程序]{../LiangHengyu/seccomp/main.c}
+\lstinputlisting[style=C,caption=seccomp程序]{seccomp/main.c}
 
 编译好这个程序，我们使用这个程序调用一个需要进行写操作的程序{\ttfamily ls}，
 同时我们还需要使用{\ttfamily strace}来跟踪{\ttfamily ls}所有的系统调用。
 执行的\textbf{部分}结果如下：
 
-\lstinputlisting[style=bash,caption=seccomp程序执行结果]{../LiangHengyu/seccompshort.txt}
+\lstinputlisting[style=bash,caption=seccomp程序执行结果]{seccomp/seccompshort.txt}
 
 为了节省空间，大部分程序的输出都被省略掉了，完整结果可见代码\ref{seccomp完整}。
 
@@ -527,7 +527,7 @@ BPF的程序的功能丰富度是和内核对BPF程序的支持直接相关的�
 其中涉及到的最大代码长度、最长运行时间等重要常数通过宏定义的方式定义在此文件或{\ttfamily bpf.c}中。
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\columnwidth]{../LvHongtao/pic_2.jpg}
+    \includegraphics[width=0.9\columnwidth]{pic_2.jpg}
     \caption{{\ttfamily bpf\_check}函数}
 \end{figure}
 
@@ -543,7 +543,7 @@ linux下有关{\ttfamily helper}函数的主要定义都位于{\ttfamily linux/k
 这些程序类型的声明方式对我们的代码编写有着重要的指导意义。
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\columnwidth]{../LvHongtao/pic_3.jpg}
+    \includegraphics[width=0.9\columnwidth]{pic_3.jpg}
     \caption{\ttfamily bpf\_types.h}
 \end{figure}
 

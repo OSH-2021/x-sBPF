@@ -8,6 +8,4 @@
 *.blg
 *.nav
 *.snm
-research/LiangHengyu/*.pdf
-research/feasibility/*.pdf
-mid/*.pdf
+*.pdf
