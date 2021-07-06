@@ -6,5 +6,6 @@
 *.toc
 *.bbl
 *.blg
-research/LiangHengyu/*.pdf
-research/feasibility/*.pdf
+*.nav
+*.snm
+*.pdf

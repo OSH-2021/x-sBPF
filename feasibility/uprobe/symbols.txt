@@ -1,0 +1,13 @@
+                 U abort@@GLIBC_2.17
+0000000000011018 B __bss_end__
+0000000000011018 B _bss_end__
+0000000000011010 B __bss_start
+0000000000011010 B __bss_start__
+...
+0000000000000790 T __libc_csu_init
+                 U __libc_start_main@@GLIBC_2.17
+000000000000076c T main
+                 U puts@@GLIBC_2.17
+00000000000006e0 t register_tm_clones
+0000000000000660 T _start
+0000000000011010 D __TMC_END__

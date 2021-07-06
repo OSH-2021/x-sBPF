@@ -184,8 +184,856 @@ MBOX是一个为非root用户提供的沙盒环境，主要面对filesystem进�
   - 动态装载器是一个用户执行环境的组件，它能够帮助在开始时加载应用需要的库并解析库导出的动态符号(函数和全局变量)供应用程序使用。在这一节中，我们将会阐述动态符号解析的过程在基于ELF的系统上是如何工作的 [33]
 
 
-
 - 三条技术路线
   - 在seccomp结构上优化制作更好的系统调用的拦截和判断机制，实现只通过一个简单的过滤器就能保证较强安全性的轻量级安全沙盒。
   - 尝试将一个基于虚拟化技术的安全沙盒通过bpf程序的方式制作出来并且诸如OS内运行，可能需要修改现有的ebpf认证与导入机制。
   - 仅将bpf程序作为劫持和修改系统调用的小模块，将其结合到某个现有的用户态沙盒中，从而优化某个用户态沙盒应用的效率
+
+
+## 4月15日
+- Open Container Initiative（OCI） 为docker和gvisor之类的容器技术所支持的接口
+
+
+## 4月16日
+- 对linux源码的阅读结果
+  - verifier的主要代码位于linux/kernel/bpf/verifier.c
+  - 我们计划进行简单修改的MAXSIZE项来自于linux/kernel/bpf/bpf.c
+  - 
+
+
+- https://www.zhihu.com/question/25357707 如何修改linux
+- https://xz.aliyun.com/t/8482 linux kernel bpf模块的漏洞和其利用方式。
+
+## 5月21日
+- linux内bpf program type的实现方式相关源码分析  
+  - 调研从 syscall标准入口函数开始，源代码内容如下，主要工作流程为检查权限（或者capable),检查传入内容的合法性，然后对cmd的内容进行分支，决定调用具体的功能函数    
+  ``` C++
+  SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
+  {
+    union bpf_attr attr;
+    int err;
+
+    if (sysctl_unprivileged_bpf_disabled && !bpf_capable())
+      return -EPERM;
+
+    err = bpf_check_uarg_tail_zero(uattr, sizeof(attr), size);
+    if (err)
+      return err;
+    size = min_t(u32, size, sizeof(attr));
+
+    /* copy attributes from user space, may be less than sizeof(bpf_attr) */
+    memset(&attr, 0, sizeof(attr));
+    if (copy_from_user(&attr, uattr, size) != 0)
+      return -EFAULT;
+
+    err = security_bpf(cmd, &attr, size);
+    if (err < 0)
+      return err;
+
+    switch (cmd) {
+    case BPF_MAP_CREATE:
+      err = map_create(&attr);
+      break;
+    case BPF_MAP_LOOKUP_ELEM:
+      err = map_lookup_elem(&attr);
+      break;
+    case BPF_MAP_UPDATE_ELEM:
+      err = map_update_elem(&attr);
+      break;
+    case BPF_MAP_DELETE_ELEM:
+      err = map_delete_elem(&attr);
+      break;
+    case BPF_MAP_GET_NEXT_KEY:
+      err = map_get_next_key(&attr);
+      break;
+    case BPF_MAP_FREEZE:
+      err = map_freeze(&attr);
+      break;
+    case BPF_PROG_LOAD:
+      err = bpf_prog_load(&attr, uattr);
+      break;
+    case BPF_OBJ_PIN:
+      err = bpf_obj_pin(&attr);
+      break;
+    case BPF_OBJ_GET:
+      err = bpf_obj_get(&attr);
+      break;
+    case BPF_PROG_ATTACH:
+      err = bpf_prog_attach(&attr);
+      break;
+    case BPF_PROG_DETACH:
+      err = bpf_prog_detach(&attr);
+      break;
+    case BPF_PROG_QUERY:
+      err = bpf_prog_query(&attr, uattr);
+      break;
+    case BPF_PROG_TEST_RUN:
+      err = bpf_prog_test_run(&attr, uattr);
+      break;
+    case BPF_PROG_GET_NEXT_ID:
+      err = bpf_obj_get_next_id(&attr, uattr,
+              &prog_idr, &prog_idr_lock);
+      break;
+    case BPF_MAP_GET_NEXT_ID:
+      err = bpf_obj_get_next_id(&attr, uattr,
+              &map_idr, &map_idr_lock);
+      break;
+    case BPF_BTF_GET_NEXT_ID:
+      err = bpf_obj_get_next_id(&attr, uattr,
+              &btf_idr, &btf_idr_lock);
+      break;
+    case BPF_PROG_GET_FD_BY_ID:
+      err = bpf_prog_get_fd_by_id(&attr);
+      break;
+    case BPF_MAP_GET_FD_BY_ID:
+      err = bpf_map_get_fd_by_id(&attr);
+      break;
+    case BPF_OBJ_GET_INFO_BY_FD:
+      err = bpf_obj_get_info_by_fd(&attr, uattr);
+      break;
+    case BPF_RAW_TRACEPOINT_OPEN:
+      err = bpf_raw_tracepoint_open(&attr);
+      break;
+    case BPF_BTF_LOAD:
+      err = bpf_btf_load(&attr);
+      break;
+    case BPF_BTF_GET_FD_BY_ID:
+      err = bpf_btf_get_fd_by_id(&attr);
+      break;
+    case BPF_TASK_FD_QUERY:
+      err = bpf_task_fd_query(&attr, uattr);
+      break;
+    case BPF_MAP_LOOKUP_AND_DELETE_ELEM:
+      err = map_lookup_and_delete_elem(&attr);
+      break;
+    case BPF_MAP_LOOKUP_BATCH:
+      err = bpf_map_do_batch(&attr, uattr, BPF_MAP_LOOKUP_BATCH);
+      break;
+    case BPF_MAP_LOOKUP_AND_DELETE_BATCH:
+      err = bpf_map_do_batch(&attr, uattr,
+                BPF_MAP_LOOKUP_AND_DELETE_BATCH);
+      break;
+    case BPF_MAP_UPDATE_BATCH:
+      err = bpf_map_do_batch(&attr, uattr, BPF_MAP_UPDATE_BATCH);
+      break;
+    case BPF_MAP_DELETE_BATCH:
+      err = bpf_map_do_batch(&attr, uattr, BPF_MAP_DELETE_BATCH);
+      break;
+    case BPF_LINK_CREATE:
+      err = link_create(&attr);
+      break;
+    case BPF_LINK_UPDATE:
+      err = link_update(&attr);
+      break;
+    case BPF_LINK_GET_FD_BY_ID:
+      err = bpf_link_get_fd_by_id(&attr);
+      break;
+    case BPF_LINK_GET_NEXT_ID:
+      err = bpf_obj_get_next_id(&attr, uattr,
+              &link_idr, &link_idr_lock);
+      break;
+    case BPF_ENABLE_STATS:
+      err = bpf_enable_stats(&attr);
+      break;
+    case BPF_ITER_CREATE:
+      err = bpf_iter_create(&attr);
+      break;
+    default:
+      err = -EINVAL;
+      break;
+    }
+  ```
+  - 下面引用的代码是bpf内定义的各种枚举类型，通过枚举类型定义了bpf内会需要使用到的各种程序类型、链接类型、map类型、cmd类型等。
+  ``` C++
+  enum bpf_cmd {
+    BPF_MAP_CREATE,
+    BPF_MAP_LOOKUP_ELEM,
+    BPF_MAP_UPDATE_ELEM,
+    BPF_MAP_DELETE_ELEM,
+    BPF_MAP_GET_NEXT_KEY,
+    BPF_PROG_LOAD,
+    BPF_OBJ_PIN,
+    BPF_OBJ_GET,
+    BPF_PROG_ATTACH,
+    BPF_PROG_DETACH,
+    BPF_PROG_TEST_RUN,
+    BPF_PROG_GET_NEXT_ID,
+    BPF_MAP_GET_NEXT_ID,
+    BPF_PROG_GET_FD_BY_ID,
+    BPF_MAP_GET_FD_BY_ID,
+    BPF_OBJ_GET_INFO_BY_FD,
+    BPF_PROG_QUERY,
+    BPF_RAW_TRACEPOINT_OPEN,
+    BPF_BTF_LOAD,
+    BPF_BTF_GET_FD_BY_ID,
+    BPF_TASK_FD_QUERY,
+    BPF_MAP_LOOKUP_AND_DELETE_ELEM,
+    BPF_MAP_FREEZE,
+    BPF_BTF_GET_NEXT_ID,
+    BPF_MAP_LOOKUP_BATCH,
+    BPF_MAP_LOOKUP_AND_DELETE_BATCH,
+    BPF_MAP_UPDATE_BATCH,
+    BPF_MAP_DELETE_BATCH,
+    BPF_LINK_CREATE,
+    BPF_LINK_UPDATE,
+    BPF_LINK_GET_FD_BY_ID,
+    BPF_LINK_GET_NEXT_ID,
+    BPF_ENABLE_STATS,
+    BPF_ITER_CREATE,
+  };
+
+  enum bpf_map_type {
+    BPF_MAP_TYPE_UNSPEC,
+    BPF_MAP_TYPE_HASH,
+    BPF_MAP_TYPE_ARRAY,
+    BPF_MAP_TYPE_PROG_ARRAY,
+    BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+    BPF_MAP_TYPE_PERCPU_HASH,
+    BPF_MAP_TYPE_PERCPU_ARRAY,
+    BPF_MAP_TYPE_STACK_TRACE,
+    BPF_MAP_TYPE_CGROUP_ARRAY,
+    BPF_MAP_TYPE_LRU_HASH,
+    BPF_MAP_TYPE_LRU_PERCPU_HASH,
+    BPF_MAP_TYPE_LPM_TRIE,
+    BPF_MAP_TYPE_ARRAY_OF_MAPS,
+    BPF_MAP_TYPE_HASH_OF_MAPS,
+    BPF_MAP_TYPE_DEVMAP,
+    BPF_MAP_TYPE_SOCKMAP,
+    BPF_MAP_TYPE_CPUMAP,
+    BPF_MAP_TYPE_XSKMAP,
+    BPF_MAP_TYPE_SOCKHASH,
+    BPF_MAP_TYPE_CGROUP_STORAGE,
+    BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+    BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE,
+    BPF_MAP_TYPE_QUEUE,
+    BPF_MAP_TYPE_STACK,
+    BPF_MAP_TYPE_SK_STORAGE,
+    BPF_MAP_TYPE_DEVMAP_HASH,
+    BPF_MAP_TYPE_STRUCT_OPS,
+    BPF_MAP_TYPE_RINGBUF,
+  };
+
+  /* Note that tracing related programs such as
+  * BPF_PROG_TYPE_{KPROBE,TRACEPOINT,PERF_EVENT,RAW_TRACEPOINT}
+  * are not subject to a stable API since kernel internal data
+  * structures can change from release to release and may
+  * therefore break existing tracing BPF programs. Tracing BPF
+  * programs correspond to /a/ specific kernel which is to be
+  * analyzed, and not /a/ specific kernel /and/ all future ones.
+  */
+  enum bpf_prog_type {
+    BPF_PROG_TYPE_UNSPEC,
+    BPF_PROG_TYPE_SOCKET_FILTER,
+    BPF_PROG_TYPE_KPROBE,
+    BPF_PROG_TYPE_SCHED_CLS,
+    BPF_PROG_TYPE_SCHED_ACT,
+    BPF_PROG_TYPE_TRACEPOINT,
+    BPF_PROG_TYPE_XDP,
+    BPF_PROG_TYPE_PERF_EVENT,
+    BPF_PROG_TYPE_CGROUP_SKB,
+    BPF_PROG_TYPE_CGROUP_SOCK,
+    BPF_PROG_TYPE_LWT_IN,
+    BPF_PROG_TYPE_LWT_OUT,
+    BPF_PROG_TYPE_LWT_XMIT,
+    BPF_PROG_TYPE_SOCK_OPS,
+    BPF_PROG_TYPE_SK_SKB,
+    BPF_PROG_TYPE_CGROUP_DEVICE,
+    BPF_PROG_TYPE_SK_MSG,
+    BPF_PROG_TYPE_RAW_TRACEPOINT,
+    BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+    BPF_PROG_TYPE_LWT_SEG6LOCAL,
+    BPF_PROG_TYPE_LIRC_MODE2,
+    BPF_PROG_TYPE_SK_REUSEPORT,
+    BPF_PROG_TYPE_FLOW_DISSECTOR,
+    BPF_PROG_TYPE_CGROUP_SYSCTL,
+    BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+    BPF_PROG_TYPE_CGROUP_SOCKOPT,
+    BPF_PROG_TYPE_TRACING,
+    BPF_PROG_TYPE_STRUCT_OPS,
+    BPF_PROG_TYPE_EXT,
+    BPF_PROG_TYPE_LSM,
+  };
+
+  enum bpf_attach_type {
+    BPF_CGROUP_INET_INGRESS,
+    BPF_CGROUP_INET_EGRESS,
+    BPF_CGROUP_INET_SOCK_CREATE,
+    BPF_CGROUP_SOCK_OPS,
+    BPF_SK_SKB_STREAM_PARSER,
+    BPF_SK_SKB_STREAM_VERDICT,
+    BPF_CGROUP_DEVICE,
+    BPF_SK_MSG_VERDICT,
+    BPF_CGROUP_INET4_BIND,
+    BPF_CGROUP_INET6_BIND,
+    BPF_CGROUP_INET4_CONNECT,
+    BPF_CGROUP_INET6_CONNECT,
+    BPF_CGROUP_INET4_POST_BIND,
+    BPF_CGROUP_INET6_POST_BIND,
+    BPF_CGROUP_UDP4_SENDMSG,
+    BPF_CGROUP_UDP6_SENDMSG,
+    BPF_LIRC_MODE2,
+    BPF_FLOW_DISSECTOR,
+    BPF_CGROUP_SYSCTL,
+    BPF_CGROUP_UDP4_RECVMSG,
+    BPF_CGROUP_UDP6_RECVMSG,
+    BPF_CGROUP_GETSOCKOPT,
+    BPF_CGROUP_SETSOCKOPT,
+    BPF_TRACE_RAW_TP,
+    BPF_TRACE_FENTRY,
+    BPF_TRACE_FEXIT,
+    BPF_MODIFY_RETURN,
+    BPF_LSM_MAC,
+    BPF_TRACE_ITER,
+    BPF_CGROUP_INET4_GETPEERNAME,
+    BPF_CGROUP_INET6_GETPEERNAME,
+    BPF_CGROUP_INET4_GETSOCKNAME,
+    BPF_CGROUP_INET6_GETSOCKNAME,
+    BPF_XDP_DEVMAP,
+    __MAX_BPF_ATTACH_TYPE
+  };
+
+  #define MAX_BPF_ATTACH_TYPE __MAX_BPF_ATTACH_TYPE
+
+  enum bpf_link_type {
+    BPF_LINK_TYPE_UNSPEC = 0,
+    BPF_LINK_TYPE_RAW_TRACEPOINT = 1,
+    BPF_LINK_TYPE_TRACING = 2,
+    BPF_LINK_TYPE_CGROUP = 3,
+    BPF_LINK_TYPE_ITER = 4,
+    BPF_LINK_TYPE_NETNS = 5,
+
+    MAX_BPF_LINK_TYPE,
+  };
+
+  ```
+  - 然后我们从load段开始研究，下面是bpf_porg_load相关源码，load段获得了一个bpf程序的attr，bpf的prog_type是作为attr的一个属性出现并且传递给变量type的，
+  这段代码在完成了基本的权限检查和合法性检查后的主要功能函数如下
+    - license_is_gpl_compatible
+    - bpf_prog_load_fixup_attach_type
+    - bpf_prog_load_check_attach
+    - bpf_prog_alloc
+    - bpf_prog_get
+    - security_bpf_prog_alloc
+    - bpf_prog_charge_memlock
+    - copy_from_user
+    - atomic64_set
+    - bpf_prog_is_dev_bound
+    - bpf_prog_offload_init
+    - find_prog_type
+    - ktime_get_boottime_ns
+    - bpf_obj_name_cpy
+    - bpf_check
+    - bpf_prog_select_runtime
+    - bpf_prog_alloc_id
+    - bpf_prog_kallsyms_add
+    - perf_event_bpf_event
+    - bpf_audit_prog
+    - bpf_prog_new_fd
+    - bpf_prog_put  
+    在检查权限和合法性之后，这段程序给bpf程序分配了空间，给prog进行各种初始化，检查了bpf程序本身的安全性（bpf_check)，然后将bpf程序加载完成。
+  ``` C++
+  static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
+  {
+    enum bpf_prog_type type = attr->prog_type;
+    struct bpf_prog *prog;
+    int err;
+    char license[128];
+    bool is_gpl;
+
+    if (CHECK_ATTR(BPF_PROG_LOAD))
+      return -EINVAL;
+
+    if (attr->prog_flags & ~(BPF_F_STRICT_ALIGNMENT |
+          BPF_F_ANY_ALIGNMENT |
+          BPF_F_TEST_STATE_FREQ |
+          BPF_F_TEST_RND_HI32))
+      return -EINVAL;
+
+    if (!IS_ENABLED(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS) &&
+        (attr->prog_flags & BPF_F_ANY_ALIGNMENT) &&
+        !bpf_capable())
+      return -EPERM;
+
+    /* copy eBPF program license from user space */
+    if (strncpy_from_user(license, u64_to_user_ptr(attr->license),
+              sizeof(license) - 1) < 0)
+      return -EFAULT;
+    license[sizeof(license) - 1] = 0;
+
+    /* eBPF programs must be GPL compatible to use GPL-ed functions */
+    is_gpl = license_is_gpl_compatible(license);
+
+    if (attr->insn_cnt == 0 ||
+        attr->insn_cnt > (bpf_capable() ? BPF_COMPLEXITY_LIMIT_INSNS : BPF_MAXINSNS))
+      return -E2BIG;
+    if (type != BPF_PROG_TYPE_SOCKET_FILTER &&
+        type != BPF_PROG_TYPE_CGROUP_SKB &&
+        !bpf_capable())
+      return -EPERM;
+
+    if (is_net_admin_prog_type(type) && !capable(CAP_NET_ADMIN) && !capable(CAP_SYS_ADMIN))
+      return -EPERM;
+    if (is_perfmon_prog_type(type) && !perfmon_capable())
+      return -EPERM;
+
+    bpf_prog_load_fixup_attach_type(attr);
+    if (bpf_prog_load_check_attach(type, attr->expected_attach_type,
+                attr->attach_btf_id,
+                attr->attach_prog_fd))
+      return -EINVAL;
+
+    /* plain bpf_prog allocation */
+    prog = bpf_prog_alloc(bpf_prog_size(attr->insn_cnt), GFP_USER);
+    if (!prog)
+      return -ENOMEM;
+
+    prog->expected_attach_type = attr->expected_attach_type;
+    prog->aux->attach_btf_id = attr->attach_btf_id;
+    if (attr->attach_prog_fd) {
+      struct bpf_prog *tgt_prog;
+
+      tgt_prog = bpf_prog_get(attr->attach_prog_fd);
+      if (IS_ERR(tgt_prog)) {
+        err = PTR_ERR(tgt_prog);
+        goto free_prog_nouncharge;
+      }
+      prog->aux->linked_prog = tgt_prog;
+    }
+
+    prog->aux->offload_requested = !!attr->prog_ifindex;
+
+    err = security_bpf_prog_alloc(prog->aux);
+    if (err)
+      goto free_prog_nouncharge;
+
+    err = bpf_prog_charge_memlock(prog);
+    if (err)
+      goto free_prog_sec;
+
+    prog->len = attr->insn_cnt;
+
+    err = -EFAULT;
+    if (copy_from_user(prog->insns, u64_to_user_ptr(attr->insns),
+          bpf_prog_insn_size(prog)) != 0)
+      goto free_prog;
+
+    prog->orig_prog = NULL;
+    prog->jited = 0;
+
+    atomic64_set(&prog->aux->refcnt, 1);
+    prog->gpl_compatible = is_gpl ? 1 : 0;
+
+    if (bpf_prog_is_dev_bound(prog->aux)) {
+      err = bpf_prog_offload_init(prog, attr);
+      if (err)
+        goto free_prog;
+    }
+
+    /* find program type: socket_filter vs tracing_filter */
+    err = find_prog_type(type, prog);
+    if (err < 0)
+      goto free_prog;
+
+    prog->aux->load_time = ktime_get_boottime_ns();
+    err = bpf_obj_name_cpy(prog->aux->name, attr->prog_name,
+              sizeof(attr->prog_name));
+    if (err < 0)
+      goto free_prog;
+
+    /* run eBPF verifier */
+    err = bpf_check(&prog, attr, uattr);
+    if (err < 0)
+      goto free_used_maps;
+
+    prog = bpf_prog_select_runtime(prog, &err);
+    if (err < 0)
+      goto free_used_maps;
+
+    err = bpf_prog_alloc_id(prog);
+    if (err)
+      goto free_used_maps;
+
+    /* Upon success of bpf_prog_alloc_id(), the BPF prog is
+    * effectively publicly exposed. However, retrieving via
+    * bpf_prog_get_fd_by_id() will take another reference,
+    * therefore it cannot be gone underneath us.
+    *
+    * Only for the time /after/ successful bpf_prog_new_fd()
+    * and before returning to userspace, we might just hold
+    * one reference and any parallel close on that fd could
+    * rip everything out. Hence, below notifications must
+    * happen before bpf_prog_new_fd().
+    *
+    * Also, any failure handling from this point onwards must
+    * be using bpf_prog_put() given the program is exposed.
+    */
+    bpf_prog_kallsyms_add(prog);
+    perf_event_bpf_event(prog, PERF_BPF_EVENT_PROG_LOAD, 0);
+    bpf_audit_prog(prog, BPF_AUDIT_LOAD);
+
+    err = bpf_prog_new_fd(prog);
+    if (err < 0)
+      bpf_prog_put(prog);
+    return err;
+
+  free_used_maps:
+    /* In case we have subprogs, we need to wait for a grace
+    * period before we can tear down JIT memory since symbols
+    * are already exposed under kallsyms.
+    */
+    __bpf_prog_put_noref(prog, prog->aux->func_cnt);
+    return err;
+  free_prog:
+    bpf_prog_uncharge_memlock(prog);
+  free_prog_sec:
+    security_bpf_prog_free(prog->aux);
+  free_prog_nouncharge:
+    bpf_prog_free(prog);
+    return err;
+  }
+
+  ```
+
+  - 这是上文bpf_prog_load中的一个子函数，主要功能就是检查传入的bpf attr中所存的type属性是否和定义一致。具体的来说，find_prog_type上方简单的通过全局静态变量定义了bpf_prog_types数组，这个数组的构建方式会在后面马上提到。程序中只要检查传入的type是否在数组范围内，检查数组内对应type的内容是否合法，如果通过了检查则将type内的op域内容直接传递给prog的属性aux->ops，将传入的type内容直接传递给prog作为属性存下。
+  ``` C++
+  static const struct bpf_prog_ops * const bpf_prog_types[] = {
+  #define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
+    [_id] = & _name ## _prog_ops,
+  #define BPF_MAP_TYPE(_id, _ops)
+  #define BPF_LINK_TYPE(_id, _name)
+  #include <linux/bpf_types.h>
+  #undef BPF_PROG_TYPE
+  #undef BPF_MAP_TYPE
+  #undef BPF_LINK_TYPE
+  };
+
+  static int find_prog_type(enum bpf_prog_type type, struct bpf_prog *prog)
+  {
+    const struct bpf_prog_ops *ops;
+
+    if (type >= ARRAY_SIZE(bpf_prog_types))
+      return -EINVAL;
+    type = array_index_nospec(type, ARRAY_SIZE(bpf_prog_types));
+    ops = bpf_prog_types[type];
+    if (!ops)
+      return -EINVAL;
+
+    if (!bpf_prog_is_dev_bound(prog->aux))
+      prog->aux->ops = ops;
+    else
+      prog->aux->ops = &bpf_offload_prog_ops;
+    prog->type = type;
+    return 0;
+  }
+  
+  ```
+  - 这段内容是bpf_prog_types数组的定义和定义中用到的内部头文件bpf_types.h，结合起来就可以看出这里是如何使用头文件简化代码内容的。
+  这里的调用include前define的`#define BPF_MAP_TYPE(_id, _ops)`此类空的宏定义会将符合对应格式的内容直接忽视（效果类似于条件注释），`#define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) [_id] = & _name ## _prog_ops,`这样一个宏定义会将BPF_PROG_TYPE(A,B,C,D)转义成 [A]=&B_prog_ops,由于id是枚举型，可以直接转义成下标，B的_name项则是会加上后缀_prog_ops作为一个整体的结构体名字用来定位实际的内容，实际的结构体内容则是在bpf.h中通过类似的方法结合外部引用而来，具体定义则是分布在其他各个模块的源代码中。比较奇怪的事情在于这个prog_ops结构体的内容只有一个函数指针用于test_run，可能此部分代码的测试性质高于实际功能。
+
+  ``` C++
+  static const struct bpf_prog_ops * const bpf_prog_types[] = {
+  #define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
+    [_id] = & _name ## _prog_ops,
+  #define BPF_MAP_TYPE(_id, _ops)
+  #define BPF_LINK_TYPE(_id, _name)
+  #include <linux/bpf_types.h>
+  #undef BPF_PROG_TYPE
+  #undef BPF_MAP_TYPE
+  #undef BPF_LINK_TYPE
+  };
+  ```
+  ``` C++
+  /* SPDX-License-Identifier: GPL-2.0 */
+  /* internal file - do not include directly */
+
+  #ifdef CONFIG_NET
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SOCKET_FILTER, sk_filter,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SCHED_CLS, tc_cls_act,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SCHED_ACT, tc_cls_act,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_XDP, xdp,
+          struct xdp_md, struct xdp_buff)
+  #ifdef CONFIG_CGROUP_BPF
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SKB, cg_skb,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SOCK, cg_sock,
+          struct bpf_sock, struct sock)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, cg_sock_addr,
+          struct bpf_sock_addr, struct bpf_sock_addr_kern)
+  #endif
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LWT_IN, lwt_in,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LWT_OUT, lwt_out,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LWT_XMIT, lwt_xmit,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LWT_SEG6LOCAL, lwt_seg6local,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SOCK_OPS, sock_ops,
+          struct bpf_sock_ops, struct bpf_sock_ops_kern)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SK_SKB, sk_skb,
+          struct __sk_buff, struct sk_buff)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SK_MSG, sk_msg,
+          struct sk_msg_md, struct sk_msg)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_FLOW_DISSECTOR, flow_dissector,
+          struct __sk_buff, struct bpf_flow_dissector)
+  #endif
+  #ifdef CONFIG_BPF_EVENTS
+  BPF_PROG_TYPE(BPF_PROG_TYPE_KPROBE, kprobe,
+          bpf_user_pt_regs_t, struct pt_regs)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_TRACEPOINT, tracepoint,
+          __u64, u64)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_PERF_EVENT, perf_event,
+          struct bpf_perf_event_data, struct bpf_perf_event_data_kern)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_RAW_TRACEPOINT, raw_tracepoint,
+          struct bpf_raw_tracepoint_args, u64)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE, raw_tracepoint_writable,
+          struct bpf_raw_tracepoint_args, u64)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_TRACING, tracing,
+          void *, void *)
+  #endif
+  #ifdef CONFIG_CGROUP_BPF
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_DEVICE, cg_dev,
+          struct bpf_cgroup_dev_ctx, struct bpf_cgroup_dev_ctx)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SYSCTL, cg_sysctl,
+          struct bpf_sysctl, struct bpf_sysctl_kern)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SOCKOPT, cg_sockopt,
+          struct bpf_sockopt, struct bpf_sockopt_kern)
+  #endif
+  #ifdef CONFIG_BPF_LIRC_MODE2
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LIRC_MODE2, lirc_mode2,
+          __u32, u32)
+  #endif
+  #ifdef CONFIG_INET
+  BPF_PROG_TYPE(BPF_PROG_TYPE_SK_REUSEPORT, sk_reuseport,
+          struct sk_reuseport_md, struct sk_reuseport_kern)
+  #endif
+  #if defined(CONFIG_BPF_JIT)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_STRUCT_OPS, bpf_struct_ops,
+          void *, void *)
+  BPF_PROG_TYPE(BPF_PROG_TYPE_EXT, bpf_extension,
+          void *, void *)
+  #ifdef CONFIG_BPF_LSM
+  BPF_PROG_TYPE(BPF_PROG_TYPE_LSM, lsm,
+          void *, void *)
+  #endif /* CONFIG_BPF_LSM */
+  #endif
+
+  BPF_MAP_TYPE(BPF_MAP_TYPE_ARRAY, array_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_PERCPU_ARRAY, percpu_array_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_PROG_ARRAY, prog_array_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_PERF_EVENT_ARRAY, perf_event_array_map_ops)
+  #ifdef CONFIG_CGROUPS
+  BPF_MAP_TYPE(BPF_MAP_TYPE_CGROUP_ARRAY, cgroup_array_map_ops)
+  #endif
+  #ifdef CONFIG_CGROUP_BPF
+  BPF_MAP_TYPE(BPF_MAP_TYPE_CGROUP_STORAGE, cgroup_storage_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE, cgroup_storage_map_ops)
+  #endif
+  BPF_MAP_TYPE(BPF_MAP_TYPE_HASH, htab_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_PERCPU_HASH, htab_percpu_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_LRU_HASH, htab_lru_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_LRU_PERCPU_HASH, htab_lru_percpu_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_LPM_TRIE, trie_map_ops)
+  #ifdef CONFIG_PERF_EVENTS
+  BPF_MAP_TYPE(BPF_MAP_TYPE_STACK_TRACE, stack_trace_map_ops)
+  #endif
+  BPF_MAP_TYPE(BPF_MAP_TYPE_ARRAY_OF_MAPS, array_of_maps_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_HASH_OF_MAPS, htab_of_maps_map_ops)
+  #ifdef CONFIG_NET
+  BPF_MAP_TYPE(BPF_MAP_TYPE_DEVMAP, dev_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_DEVMAP_HASH, dev_map_hash_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_SK_STORAGE, sk_storage_map_ops)
+  #if defined(CONFIG_BPF_STREAM_PARSER)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_SOCKMAP, sock_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_SOCKHASH, sock_hash_ops)
+  #endif
+  BPF_MAP_TYPE(BPF_MAP_TYPE_CPUMAP, cpu_map_ops)
+  #if defined(CONFIG_XDP_SOCKETS)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_XSKMAP, xsk_map_ops)
+  #endif
+  #ifdef CONFIG_INET
+  BPF_MAP_TYPE(BPF_MAP_TYPE_REUSEPORT_SOCKARRAY, reuseport_array_ops)
+  #endif
+  #endif
+  BPF_MAP_TYPE(BPF_MAP_TYPE_QUEUE, queue_map_ops)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_STACK, stack_map_ops)
+  #if defined(CONFIG_BPF_JIT)
+  BPF_MAP_TYPE(BPF_MAP_TYPE_STRUCT_OPS, bpf_struct_ops_map_ops)
+  #endif
+  BPF_MAP_TYPE(BPF_MAP_TYPE_RINGBUF, ringbuf_map_ops)
+
+  BPF_LINK_TYPE(BPF_LINK_TYPE_RAW_TRACEPOINT, raw_tracepoint)
+  BPF_LINK_TYPE(BPF_LINK_TYPE_TRACING, tracing)
+  #ifdef CONFIG_CGROUP_BPF
+  BPF_LINK_TYPE(BPF_LINK_TYPE_CGROUP, cgroup)
+  #endif
+  BPF_LINK_TYPE(BPF_LINK_TYPE_ITER, iter)
+  #ifdef CONFIG_NET
+  BPF_LINK_TYPE(BPF_LINK_TYPE_NETNS, netns)
+  #endif
+
+  ```
+  - 这个程序是bpf_prog_attach，通过各种安全检查之后，将attach_type转换成prog_type,进入一个大的switch,分支决定在attach过程中需要进行哪些工作。
+  ``` C++
+  static int bpf_prog_attach(const union bpf_attr *attr)
+  {
+    enum bpf_prog_type ptype;
+    struct bpf_prog *prog;
+    int ret;
+
+    if (CHECK_ATTR(BPF_PROG_ATTACH))
+      return -EINVAL;
+
+    if (attr->attach_flags & ~BPF_F_ATTACH_MASK)
+      return -EINVAL;
+
+    ptype = attach_type_to_prog_type(attr->attach_type);
+    if (ptype == BPF_PROG_TYPE_UNSPEC)
+      return -EINVAL;
+
+    prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype);
+    if (IS_ERR(prog))
+      return PTR_ERR(prog);
+
+    if (bpf_prog_attach_check_attach_type(prog, attr->attach_type)) {
+      bpf_prog_put(prog);
+      return -EINVAL;
+    }
+
+    switch (ptype) {
+    case BPF_PROG_TYPE_SK_SKB:
+    case BPF_PROG_TYPE_SK_MSG:
+      ret = sock_map_get_from_fd(attr, prog);
+      break;
+    case BPF_PROG_TYPE_LIRC_MODE2:
+      ret = lirc_prog_attach(attr, prog);
+      break;
+    case BPF_PROG_TYPE_FLOW_DISSECTOR:
+      ret = netns_bpf_prog_attach(attr, prog);
+      break;
+    case BPF_PROG_TYPE_CGROUP_DEVICE:
+    case BPF_PROG_TYPE_CGROUP_SKB:
+    case BPF_PROG_TYPE_CGROUP_SOCK:
+    case BPF_PROG_TYPE_CGROUP_SOCK_ADDR:
+    case BPF_PROG_TYPE_CGROUP_SOCKOPT:
+    case BPF_PROG_TYPE_CGROUP_SYSCTL:
+    case BPF_PROG_TYPE_SOCK_OPS:
+      ret = cgroup_bpf_prog_attach(attr, ptype, prog);
+      break;
+    default:
+      ret = -EINVAL;
+    }
+
+    if (ret)
+      bpf_prog_put(prog);
+    return ret;
+  }
+  ```
+  - 以cgroup的实际最终调用函数为例，下面的内容__cgroup_bpf_attach是完成安全检查，设置完mutex之后，最终调用的功能函数。这个功能函数的运作流程是，首先检查各种权限和合法性，然后为了将bpf程序attach到cgroup上，需要分配若干的空间，加载若干的数据，最后通过修改cgroup的某个标志来完成bpf程序的加载，此后cgroup会在运行过程中检查此类标志来确定自己的行为以及调用bpf程序。
+  ``` C++
+  /**
+  * __cgroup_bpf_attach() - Attach the program or the link to a cgroup, and
+  *                         propagate the change to descendants
+  * @cgrp: The cgroup which descendants to traverse
+  * @prog: A program to attach
+  * @link: A link to attach
+  * @replace_prog: Previously attached program to replace if BPF_F_REPLACE is set
+  * @type: Type of attach operation
+  * @flags: Option flags
+  *
+  * Exactly one of @prog or @link can be non-null.
+  * Must be called with cgroup_mutex held.
+  */
+  int __cgroup_bpf_attach(struct cgroup *cgrp,
+        struct bpf_prog *prog, struct bpf_prog *replace_prog,
+        struct bpf_cgroup_link *link,
+        enum bpf_attach_type type, u32 flags)
+  {
+    u32 saved_flags = (flags & (BPF_F_ALLOW_OVERRIDE | BPF_F_ALLOW_MULTI));
+    struct list_head *progs = &cgrp->bpf.progs[type];
+    struct bpf_prog *old_prog = NULL;
+    struct bpf_cgroup_storage *storage[MAX_BPF_CGROUP_STORAGE_TYPE] = {};
+    struct bpf_cgroup_storage *old_storage[MAX_BPF_CGROUP_STORAGE_TYPE] = {};
+    struct bpf_prog_list *pl;
+    int err;
+
+    if (((flags & BPF_F_ALLOW_OVERRIDE) && (flags & BPF_F_ALLOW_MULTI)) ||
+        ((flags & BPF_F_REPLACE) && !(flags & BPF_F_ALLOW_MULTI)))
+      /* invalid combination */
+      return -EINVAL;
+    if (link && (prog || replace_prog))
+      /* only either link or prog/replace_prog can be specified */
+      return -EINVAL;
+    if (!!replace_prog != !!(flags & BPF_F_REPLACE))
+      /* replace_prog implies BPF_F_REPLACE, and vice versa */
+      return -EINVAL;
+
+    if (!hierarchy_allows_attach(cgrp, type))
+      return -EPERM;
+
+    if (!list_empty(progs) && cgrp->bpf.flags[type] != saved_flags)
+      /* Disallow attaching non-overridable on top
+      * of existing overridable in this cgroup.
+      * Disallow attaching multi-prog if overridable or none
+      */
+      return -EPERM;
+
+    if (prog_list_length(progs) >= BPF_CGROUP_MAX_PROGS)
+      return -E2BIG;
+
+    pl = find_attach_entry(progs, prog, link, replace_prog,
+              flags & BPF_F_ALLOW_MULTI);
+    if (IS_ERR(pl))
+      return PTR_ERR(pl);
+
+    if (bpf_cgroup_storages_alloc(storage, prog ? : link->link.prog))
+      return -ENOMEM;
+
+    if (pl) {
+      old_prog = pl->prog;
+      bpf_cgroup_storages_unlink(pl->storage);
+      bpf_cgroup_storages_assign(old_storage, pl->storage);
+    } else {
+      pl = kmalloc(sizeof(*pl), GFP_KERNEL);
+      if (!pl) {
+        bpf_cgroup_storages_free(storage);
+        return -ENOMEM;
+      }
+      list_add_tail(&pl->node, progs);
+    }
+
+    pl->prog = prog;
+    pl->link = link;
+    bpf_cgroup_storages_assign(pl->storage, storage);
+    cgrp->bpf.flags[type] = saved_flags;
+
+    err = update_effective_progs(cgrp, type);
+    if (err)
+      goto cleanup;
+
+    bpf_cgroup_storages_free(old_storage);
+    if (old_prog)
+      bpf_prog_put(old_prog);
+    else
+      static_branch_inc(&cgroup_bpf_enabled_key);
+    bpf_cgroup_storages_link(pl->storage, cgrp, type);
+    return 0;
+
+  cleanup:
+    if (old_prog) {
+      pl->prog = old_prog;
+      pl->link = NULL;
+    }
+    bpf_cgroup_storages_free(pl->storage);
+    bpf_cgroup_storages_assign(pl->storage, old_storage);
+    bpf_cgroup_storages_link(pl->storage, cgrp, type);
+    if (!old_prog) {
+      list_del(&pl->node);
+      kfree(pl);
+    }
+    return err;
+  }
+  ```
