@@ -16,19 +16,24 @@ MODULE_DESCRIPTION("sBPF file space sandbox/n");
 static int pid = 0;
 module_param(pid, int, 0644);
 
-extern int flag_openat_sBPF;
-extern static const char* (*sBPF_hook_openat_prog) (const char* filename);
+//extern int flag_openat_sBPF;
+//extern static const char* (*sBPF_hook_openat_prog) (const char* filename);
 
 // 初始化入口
 // 模块安装时执行
 // 这里的__init 同样是宏定义，主要的目的在于
 // 告诉内核，加载该模块之后，可以回收init.text的区间
 
+static int count = 10;
+
 static const char* sBPF_sandbox_process(const char* filename){
 	char kstr[256];
 	copy_from_user(kstr,filename,255);
 	kstr[255]=0;
-	printk("Get sys_openat, dir=%s\n",kstr);
+	if (count > 0) {
+		printk("Get sys_openat, dir=%s\n",kstr);
+		count--;
+	}
 	return filename;
 }
 
@@ -45,6 +50,20 @@ static int __init sBPF_init(void)
     
     printk("test fs flag: %d\n",flag_openat_sBPF);
     
+    u64 ptr = 18446603336521911784;
+    
+    int *flag = (int *)ptr;
+    
+    *flag = 0;
+    
+    u64 openat_sBPF = 18446603336521911768;
+    u64 openat_prog = 18446603336521911776;
+    
+    int *flag_openat_sBPF_ptr = (int *)openat_sBPF;
+    const char* (**sBPF_hook_openat_prog)(const char * filename) = (void *)openat_prog;
+    
+    *sBPF_hook_openat_prog = sBPF_sandbox_process;
+    *flag_openat_sBPF_ptr = 1;
     
     return 0;
 }
@@ -54,6 +73,10 @@ static int __init sBPF_init(void)
 // 同上
 static void __exit sBPF_exit(void)
 {
+	u64 openat_sBPF = 18446603336521911768;
+	int *flag_openat_sBPF_ptr = (int *)openat_sBPF;
+	*flag_openat_sBPF_ptr = 0;
+	
     	flag_openat_sBPF=0;
     	printk(KERN_ALERT" module has exitedi!\n");
 }
