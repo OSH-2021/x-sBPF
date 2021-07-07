@@ -33,17 +33,16 @@ static u64 openat_prog = 18446744071867247656;
     
 
 static const char* sBPF_sandbox_process(const char* filename){
-	char kstr[256];
-	char pwd_str[256];
-	struct path pwd;
-	get_fs_pwd(current->fs,&pwd);
-	char * pwd_head= dentry_path_raw(pwd.dentry,pwd_str,256);
 	
-	
-	copy_from_user(kstr,filename,255);
-	kstr[255]=0;
-	if (count > 0) {
-		printk("Get sys_openat, pwd=: %s, dir=%s\n",pwd_head,kstr);
+	if (pid == current->pid) {
+		char kstr[256];
+		char pwd_str[256];
+		struct path pwd;
+		get_fs_pwd(current->fs,&pwd);
+		char * pwd_head= dentry_path_raw(pwd.dentry,pwd_str,256);
+		copy_from_user(kstr,filename,255);
+		kstr[255]=0;
+		printk("Get sys_openat,pid:%d, pwd=: %s, dir=%s\n",current->pid,pwd_head,kstr);
 		count--;
 	}
 	return filename;
