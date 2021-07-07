@@ -13,18 +13,23 @@ main()
     int fd, size;
     char s[] = "Linux Programmer!\n", buffer[80];
     fd = open("./test.txt", O_WRONLY|O_CREAT);
-    write(fd, s, sizeof(s));
+    write(fd, s, sizeof(s)-1);
+    printf("%u\n",fd);
     close(fd);
     //fd = open("~/coding/test3/test.txt", O_RDONLY);
     //size = read(fd, buffer, sizeof(buffer));
     //close(fd);
     //printf("%s", buffer);
-    fd = open("/home/kk2048/coding/test3/test.txt", O_RDONLY);
+    fd = open("/home/kk2048/coding/test_openat/test.txt", O_RDONLY);
     size = read(fd, buffer, sizeof(buffer));
+    printf("%u\n",fd);
     close(fd);
-    printf("%s", buffer);
+    printf("%s\n", buffer);
+    
     fd = open("test.txt", O_RDONLY);
     size = read(fd, buffer, sizeof(buffer));
+    printf("%u\n",fd);
     close(fd);
-    printf("%s", buffer);
+    printf("%s\n", buffer);
 }
+

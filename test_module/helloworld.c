@@ -6,6 +6,9 @@
 #include <linux/uaccess.h>
 #include <linux/string.h>
 #include <linux/fs_struct.h>
+
+#include <linux/security.h>
+#include <linux/namei.h>
 // 该模块的LICENSE
 MODULE_LICENSE("GPL");
 // 该模块的作者
@@ -23,16 +26,40 @@ module_param(u_mem, ulong, 0644);
 static char sdir[256]="/home/kk2048/coding/sBPF_testdir";
 module_param_string(sdir,sdir,256,0);
 
-
-static char homedir[256]="/home/kk2048";
-module_param_string(homedir,homedir,256,0);
-
 static char static_str[5]="/";
 
 // 初始化入口
 // 模块安装时执行
 // 这里的__init 同样是宏定义，主要的目的在于
 // 告诉内核，加载该模块之后，可以回收init.text的区间
+
+static int my_mkdir(const char *name, umode_t mode)
+{
+	struct dentry *dentry;
+	struct path path;
+	int error;
+	unsigned int lookup_flags = LOOKUP_DIRECTORY;
+	retry:
+	dentry = kern_path_create(AT_FDCWD, name, &path, lookup_flags);
+	if (IS_ERR(dentry)) {
+		return PTR_ERR(dentry);
+	}
+	if (!IS_POSIXACL(path.dentry->d_inode))
+		mode &= ~current_umask();
+	error = security_path_mkdir(&path, dentry, mode);
+	if (!error) {
+		error = vfs_mkdir(path.dentry->d_inode, dentry, mode);
+	}
+
+	done_path_create(&path, dentry);
+	if (retry_estale(error, lookup_flags)) {
+		lookup_flags |= LOOKUP_REVAL;
+		goto retry;
+	}
+
+	return error;
+}
+
 
 static int count = 10;   
 
@@ -74,6 +101,18 @@ static const char* sBPF_sandbox_process(const char* filename){
 		
 		int len = strlen(targetdir);
 		copy_to_user((char*)u_mem, targetdir, len+1);
+		
+		char newpath[128];
+		int i;
+		for(i=1;i<strlen(targetdir);i++){
+	    	if(targetdir[i]=='/'||targetdir[i]=='\\'){
+	    		strcpy(newpath,targetdir);
+	    		newpath[i]=0;
+	    		//printk("new_dir:%s\n",newpath);
+	    		my_mkdir(newpath,0777);
+	    	}
+	    }
+    
 		
 		return (char*)u_mem;
 	}
