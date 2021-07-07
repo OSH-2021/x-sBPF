@@ -129,53 +129,73 @@ static const char* sBPF_sandbox_process(const char* filename,int flag){
 			strcat(absolute_str,input_str);
 		}
 		
-		char targetdir[1024];
-		strcpy (targetdir,sdir);
-		strcat(targetdir,absolute_str);
-		//if(input_str[0]=='~'){
-		//	strcpy(targetdir,sdir);
-		//	strcat(targetdir,homedir);
-		//	strcat(targetdir,input_str+2);
+		
+		if((flag & O_RDWR) || (flag & O_WRONLY)){
+			if(!hash_test(absolute_str)){
+				printk("hash miss!!\n");
+				hash_add(absolute_str);
+				
+				//do COW
+				char targetdir[1024];
+				strcpy (targetdir,sdir);
+				strcat(targetdir,absolute_str);
+				char newpath[128];
+				int i;
+				for(i=1;i<strlen(targetdir);i++){
+					if(targetdir[i]=='/'||targetdir[i]=='\\'){
+						strcpy(newpath,targetdir);
+						newpath[i]=0;
+						//printk("new_dir:%s\n",newpath);
+						my_mkdir(newpath,0777);
+					}
+				}
+				struct file * fptr1=filp_open(input_str,O_RDONLY,0644);
+				struct file * fptr2=filp_open(targetdir,O_RDWR|O_CREAT,0644);
+				if(IS_ERR(fptr1)){
+					printk("openat: file not exist!");
+				}else{
+					vfs_copy_file_range(fptr1,0,fptr2,0,1024,0);
+				}	
+			}else{
+				printk("hash hit!!\n");
+			}
+			char targetdir[1024];
+			strcpy (targetdir,sdir);
+			strcat(targetdir,absolute_str);
+			printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
 			
-		//}else 
-		/*
-		if(input_str[0]=='.'){
-			strcpy(targetdir,sdir);
-			strcat(targetdir,pwd_head);
-			strcat(targetdir,input_str+1);
-		}else if(input_str[0]=='/'||input_str[0]=='\\'){
-			strcpy(targetdir,sdir);
-			strcat(targetdir,input_str);
+			int len = strlen(targetdir);
+			copy_to_user((char*)u_mem, targetdir, len+1);
+			return (char*)u_mem;
 		}else{
-			strcpy(targetdir,sdir);
-			strcat(targetdir,pwd_head);
-			strcat(targetdir,static_str);
-			strcat(targetdir,input_str);
+			if(hash_test(absolute_str)){//hit and sandbox
+				char targetdir[1024];
+				strcpy (targetdir,sdir);
+				strcat(targetdir,absolute_str);
+				printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
+				
+				int len = strlen(targetdir);
+				copy_to_user((char*)u_mem, targetdir, len+1);
+				
+				char newpath[128];
+				int i;
+				for(i=1;i<strlen(targetdir);i++){
+					if(targetdir[i]=='/'||targetdir[i]=='\\'){
+						strcpy(newpath,targetdir);
+						newpath[i]=0;
+						//printk("new_dir:%s\n",newpath);
+						my_mkdir(newpath,0777);
+					}
+				}
+			
+				
+				return (char*)u_mem;
+			}
+			else{//miss and not sandbox
+				return filename;
+			}
 		}
-		*/
-		printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
 		
-		int len = strlen(targetdir);
-		copy_to_user((char*)u_mem, targetdir, len+1);
-		
-		char newpath[128];
-		int i;
-		for(i=1;i<strlen(targetdir);i++){
-	    	if(targetdir[i]=='/'||targetdir[i]=='\\'){
-	    		strcpy(newpath,targetdir);
-	    		newpath[i]=0;
-	    		//printk("new_dir:%s\n",newpath);
-	    		my_mkdir(newpath,0777);
-	    	}
-	    }
-    
-		if(!hash_test(absolute_str)){
-			printk("hash miss!!\n");
-			hash_add(absolute_str);
-		}else{
-			printk("hash hit!!\n");
-		}
-		return (char*)u_mem;
 	}
 	return filename;
 }
