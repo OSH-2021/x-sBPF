@@ -5,6 +5,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/string.h>
+#include <linux/fs_struct.h>
 // 该模块的LICENSE
 MODULE_LICENSE("GPL");
 // 该模块的作者
@@ -26,12 +27,23 @@ module_param(pid, int, 0644);
 
 static int count = 10;
 
+static u64 print_flag = 18446744071867247648;
+static u64 openat_sBPF = 18446744071867247664;
+static u64 openat_prog = 18446744071867247656;
+    
+
 static const char* sBPF_sandbox_process(const char* filename){
 	char kstr[256];
+	char pwd_str[256];
+	struct path pwd;
+	get_fs_pwd(current->fs,&pwd);
+	char * pwd_head= dentry_path_raw(pwd.dentry,pwd_str,256);
+	
+	
 	copy_from_user(kstr,filename,255);
 	kstr[255]=0;
 	if (count > 0) {
-		printk("Get sys_openat, dir=%s\n",kstr);
+		printk("Get sys_openat, pwd=: %s, dir=%s\n",pwd_head,kstr);
 		count--;
 	}
 	return filename;
@@ -50,14 +62,11 @@ static int __init sBPF_init(void)
     
     printk("test fs flag: %d\n",flag_openat_sBPF);
     
-    u64 ptr = 18446603336521911784;
     
-    int *flag = (int *)ptr;
+    int *flag = (int *)print_flag;
     
     *flag = 0;
     
-    u64 openat_sBPF = 18446603336521911768;
-    u64 openat_prog = 18446603336521911776;
     
     int *flag_openat_sBPF_ptr = (int *)openat_sBPF;
     const char* (**sBPF_hook_openat_prog)(const char * filename) = (void *)openat_prog;
@@ -73,11 +82,11 @@ static int __init sBPF_init(void)
 // 同上
 static void __exit sBPF_exit(void)
 {
-	u64 openat_sBPF = 18446603336521911768;
+	//u64 openat_sBPF = 18446603336521911768;
 	int *flag_openat_sBPF_ptr = (int *)openat_sBPF;
 	*flag_openat_sBPF_ptr = 0;
 	
-    	flag_openat_sBPF=0;
+    	//flag_openat_sBPF=0;
     	printk(KERN_ALERT" module has exitedi!\n");
 }
 
