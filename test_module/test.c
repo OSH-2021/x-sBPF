@@ -5,14 +5,25 @@
 #include <stdio.h>
 main()
 {
+	char test_space[1024];
+	printf("swap_space %lu\n",(unsigned long)test_space);
     printf("这个程序的PID为: %d\n", getpid());
-    getchar();        
+    getchar();   
+	 
     int fd, size;
     char s[] = "Linux Programmer!\n", buffer[80];
-    fd = open("/home/kk2048/coding/test3/test.txt", O_WRONLY|O_CREAT);
+    fd = open("./test.txt", O_WRONLY|O_CREAT);
     write(fd, s, sizeof(s));
     close(fd);
+    //fd = open("~/coding/test3/test.txt", O_RDONLY);
+    //size = read(fd, buffer, sizeof(buffer));
+    //close(fd);
+    //printf("%s", buffer);
     fd = open("/home/kk2048/coding/test3/test.txt", O_RDONLY);
+    size = read(fd, buffer, sizeof(buffer));
+    close(fd);
+    printf("%s", buffer);
+    fd = open("test.txt", O_RDONLY);
     size = read(fd, buffer, sizeof(buffer));
     close(fd);
     printf("%s", buffer);

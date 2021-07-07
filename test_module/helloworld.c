@@ -17,6 +17,18 @@ MODULE_DESCRIPTION("sBPF file space sandbox/n");
 static int pid = 0;
 module_param(pid, int, 0644);
 
+static unsigned long u_mem = 140728901785488;
+module_param(u_mem, ulong, 0644);
+
+static char sdir[256]="/home/kk2048/coding/sBPF_testdir";
+module_param_string(sdir,sdir,256,0);
+
+
+static char homedir[256]="/home/kk2048";
+module_param_string(homedir,homedir,256,0);
+
+static char static_str[5]="/";
+
 // 初始化入口
 // 模块安装时执行
 // 这里的__init 同样是宏定义，主要的目的在于
@@ -26,16 +38,44 @@ static int count = 10;
 
 static const char* sBPF_sandbox_process(const char* filename){
 	
-	if (count > 0) {
-		char kstr[256];
+	if (pid == current->pid) {
 		char pwd_str[256];
 		struct path pwd;
 		get_fs_pwd(current->fs,&pwd);
 		char * pwd_head= dentry_path_raw(pwd.dentry,pwd_str,256);
-		copy_from_user(kstr,filename,255);
-		kstr[255]=0;
-		printk("Get sys_openat,pid:%d, pwd=: %s, dir=%s\n",current->pid,pwd_head,kstr);
-		count--;
+		
+		
+		char input_str[256];
+		copy_from_user(input_str,filename,255);
+		input_str[255]=0;
+		
+		char targetdir[1024];
+		//if(input_str[0]=='~'){
+		//	strcpy(targetdir,sdir);
+		//	strcat(targetdir,homedir);
+		//	strcat(targetdir,input_str+2);
+			
+		//}else 
+		if(input_str[0]=='.'){
+			strcpy(targetdir,sdir);
+			strcat(targetdir,pwd_head);
+			strcat(targetdir,input_str+1);
+		}else if(input_str[0]=='/'||input_str[0]=='\\'){
+			strcpy(targetdir,sdir);
+			strcat(targetdir,input_str);
+		}else{
+			strcpy(targetdir,sdir);
+			strcat(targetdir,pwd_head);
+			strcat(targetdir,static_str);
+			strcat(targetdir,input_str);
+		}
+	
+		printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
+		
+		int len = strlen(targetdir);
+		copy_to_user((char*)u_mem, targetdir, len+1);
+		
+		return (char*)u_mem;
 	}
 	return filename;
 }
