@@ -55,7 +55,7 @@ static int hash_test(char * str){
 	int hash_key=hash_gen_key(str);
 	while(ptr!=NULL){
 		if(ptr->hash_key==hash_key){
-			if(strcmp(ptr->file_ori_name,str)){
+			if(strcmp(ptr->file_ori_name,str)==0){
 				return 1;
 			}
 		}
