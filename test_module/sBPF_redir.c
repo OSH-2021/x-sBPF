@@ -63,7 +63,7 @@ static int my_mkdir(const char *name, umode_t mode)
 
 static int count = 10;   
 
-static const char* sBPF_sandbox_process(const char* filename){
+static const char* sBPF_sandbox_process(const char* filename,int flag){
 	
 	if (pid == current->pid) {
 		char pwd_str[256];
