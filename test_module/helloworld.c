@@ -27,14 +27,14 @@ module_param(pid, int, 0644);
 
 static int count = 10;
 
-static u64 print_flag = 18446744071867247648;
-static u64 openat_sBPF = 18446744071867247664;
-static u64 openat_prog = 18446744071867247656;
+static u64 print_flag = 18446603336521911784;
+static u64 openat_sBPF = 18446603336521911768;
+static u64 openat_prog = 18446603336521911776;
     
 
 static const char* sBPF_sandbox_process(const char* filename){
 	
-	if (pid == current->pid) {
+	if (count > 0) {
 		char kstr[256];
 		char pwd_str[256];
 		struct path pwd;
@@ -53,14 +53,6 @@ static int __init sBPF_init(void)
 {
     
     printk(KERN_ALERT" module init!\n");
-    printk("test fs flag: %d\n",flag_openat_sBPF);
-    
-    sBPF_hook_openat_prog=sBPF_sandbox_process;
-    
-    flag_openat_sBPF=1;
-    
-    printk("test fs flag: %d\n",flag_openat_sBPF);
-    
     
     int *flag = (int *)print_flag;
     
@@ -71,7 +63,8 @@ static int __init sBPF_init(void)
     const char* (**sBPF_hook_openat_prog)(const char * filename) = (void *)openat_prog;
     
     *sBPF_hook_openat_prog = sBPF_sandbox_process;
-    *flag_openat_sBPF_ptr = 1;
+    //*flag_openat_sBPF_ptr = 1;
+    set_flag_openat_sBPF(1);
     
     return 0;
 }
@@ -83,7 +76,8 @@ static void __exit sBPF_exit(void)
 {
 	//u64 openat_sBPF = 18446603336521911768;
 	int *flag_openat_sBPF_ptr = (int *)openat_sBPF;
-	*flag_openat_sBPF_ptr = 0;
+	//*flag_openat_sBPF_ptr = 0;
+	set_flag_openat_sBPF(0);
 	
     	//flag_openat_sBPF=0;
     	printk(KERN_ALERT" module has exitedi!\n");
