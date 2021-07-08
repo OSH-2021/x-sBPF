@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
         //insmod
     pid_t pid2 = fork();
     if(pid2 == 0){
-        execl("/sbin/insmod", "insmod", argv[1], arg_pid, arg_u_mem, arg_sdir, NULL);
+        execl("/usr/bin/sudo", "sudo", "insmod", argv[1], arg_pid, arg_u_mem, arg_sdir, NULL);
     }
     waitpid(pid2, NULL, 0);
     
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
 
     //rmmod
     argv[1][strlen(argv[1])-3] = '\0';
-    execl("/sbin/rmmod", "rmmod", argv[1], NULL);
+    execl("/usr/bin/sudo", "sudo", "rmmod", argv[1], NULL);
 
 
 }
