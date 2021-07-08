@@ -3,33 +3,39 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 main()
 {
-	char test_space[1024];
-	printf("swap_space %lu\n",(unsigned long)test_space);
-    printf("这个程序的PID为: %d\n", getpid());
-    getchar();   
-	 
-    int fd, size;
-    char s[] = "Linux Programmer!\n", buffer[80];
-    fd = open("./test.txt", O_WRONLY|O_CREAT);
-    write(fd, s, sizeof(s)-1);
-    printf("%u\n",fd);
-    close(fd);
-    //fd = open("~/coding/test3/test.txt", O_RDONLY);
-    //size = read(fd, buffer, sizeof(buffer));
-    //close(fd);
-    //printf("%s", buffer);
-    fd = open("/home/kk2048/coding/test_openat/test.txt", O_RDONLY);
-    size = read(fd, buffer, sizeof(buffer));
-    printf("%u\n",fd);
-    close(fd);
-    printf("%s\n", buffer);
     
-    fd = open("test.txt", O_RDONLY);
-    size = read(fd, buffer, sizeof(buffer));
-    printf("%u\n",fd);
-    close(fd);
-    printf("%s\n", buffer);
+   char test_space[1024];
+   
+     
+    
+    char buffer[1024];
+    FILE * fp;
+
+    
+    
+    printf("swap_space %lu\n",(unsigned long)test_space);
+    printf("这个程序的PID为: %d\n", getpid());
+    getchar();  
+    
+    fp = fopen ("./../file.txt", "w");
+    fprintf(fp, "%s\n", "test_message_11111");
+    fclose(fp);
+    
+    fp = fopen ("./../file.txt", "r");
+    fscanf(fp,"%s",buffer);
+    printf("%s\n",buffer);
+    fclose(fp);
+    
+    fp = fopen ("./../file.txt", "w");
+    fprintf(fp, "%s\n", "test_message_222222");
+    fclose(fp);
+    
+    fp = fopen ("./../file.txt", "r");
+    fscanf(fp,"%s",buffer);
+    printf("%s\n",buffer);
+    fclose(fp);
 }
 
