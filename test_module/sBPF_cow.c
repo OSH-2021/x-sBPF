@@ -102,6 +102,58 @@ static int my_mkdir(const char *name, umode_t mode)
 
 
 
+static void get_abs_path(char* abs_str,char* input_str){
+    
+    char pwd_str[256];
+	struct path pwd;
+	get_fs_pwd(current->fs,&pwd);
+	char * pwd_head= dentry_path_raw(pwd.dentry,pwd_str,256);
+	
+	//this is a note heiheihei
+	
+	int i;
+	if(input_str[0]=='.'){
+		strcpy(abs_str,pwd_head);
+		strcat(abs_str,"/");
+		i=2;
+	}else if(input_str[0]=='/'||input_str[0]=='\\'){
+		strcpy(abs_str,"/");
+		i=1;
+	}else{
+		strcpy(abs_str,pwd_head);
+		strcat(abs_str,"/");
+		i=0;
+	}
+	int size=strlen(input_str);
+	int j=strlen(abs_str)-1;
+	while(i<size){
+	    if(input_str[i]=='.'){// go back folder
+	        j--;
+	        while(j>=0&&abs_str[j]!='/'&&abs_str[j]!='\\'){
+	            j--;
+	        }
+	        if(j<0){
+                j=0;
+                abs_str[1]=0;
+            }else{
+                abs_str[j+1]=0;
+            }
+            i+=3;
+	    }else{
+	        
+            while(input_str[i]!='\\'&&input_str[i]!='/'&&input_str[i]!=0){
+                j++;
+                abs_str[j]=input_str[i];
+                i++;
+            }
+            
+            j++;
+            abs_str[j]=input_str[i];
+            i++;
+        }
+	}
+}
+
 
 
 static const char* sBPF_sandbox_process(const char* filename,int flag){
@@ -118,16 +170,7 @@ static const char* sBPF_sandbox_process(const char* filename,int flag){
 		input_str[255]=0;
 		
 		char absolute_str[256];
-		if(input_str[0]=='.'){
-			strcpy(absolute_str,pwd_head);
-			strcat(absolute_str,input_str+1);
-		}else if(input_str[0]=='/'||input_str[0]=='\\'){
-			strcpy(absolute_str,input_str);
-		}else{
-			strcpy(absolute_str,pwd_head);
-			strcat(absolute_str,static_str);
-			strcat(absolute_str,input_str);
-		}
+		get_abs_path(absolute_str,input_str);
 		
 		
 		if((flag & O_RDWR) || (flag & O_WRONLY)){
