@@ -28,10 +28,22 @@ module_param_string(sdir,sdir,256,0);
 
 static char static_str[5]="/";
 
+unsigned long old_fs;
+int fs_set_flag = 0;
+
 // 初始化入口
 // 模块安装时执行
 // 这里的__init 同样是宏定义，主要的目的在于
 // 告诉内核，加载该模块之后，可以回收init.text的区间
+
+static void prog_fixup(void) {
+	if (fs_set_flag == 1) {
+		set_fs(old_fs);
+		printk("fs reset\n");
+		fs_set_flag = 0;
+	}
+}
+
 struct hash_list{
 	struct hash_list *next;
 	char* file_ori_name;
@@ -159,6 +171,8 @@ static void get_abs_path(char* abs_str,char* input_str){
 static const char* sBPF_sandbox_process(const char* filename,int flag){
 	
 	if (pid == current->pid) {
+		
+    
 		char pwd_str[256];
 		struct path pwd;
 		get_fs_pwd(current->fs,&pwd);
@@ -225,6 +239,11 @@ static const char* sBPF_sandbox_process(const char* filename,int flag){
 			strcat(targetdir,absolute_str);
 			printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
 			
+			old_fs = get_fs();
+    			set_fs(KERNEL_DS);
+    			printk("new fs set\n");
+    			fs_set_flag = 1;
+    			
 			int len = strlen(targetdir);
 			copy_to_user((char*)u_mem, targetdir, len+1);
 			return (char*)u_mem;
@@ -234,6 +253,11 @@ static const char* sBPF_sandbox_process(const char* filename,int flag){
 				strcpy (targetdir,sdir);
 				strcat(targetdir,absolute_str);
 				printk("Get sys_openat, input=:%s, output=%s\n",input_str,targetdir);
+				
+				old_fs = get_fs();
+    				set_fs(KERNEL_DS);
+    				printk("new fs set\n");
+    				fs_set_flag = 1;
 				
 				int len = strlen(targetdir);
 				copy_to_user((char*)u_mem, targetdir, len+1);
@@ -267,10 +291,14 @@ static int __init sBPF_init(void)
     
     printk(KERN_ALERT" module init!\n");
     
+    u_mem = (unsigned long)kmalloc(2048, GFP_KERNEL);
     hash_head.next=NULL;
     print_flag = 0;
     sBPF_hook_openat_prog = sBPF_sandbox_process;
+    sBPF_hook_openat_prog_fixup = prog_fixup;
     flag_openat_sBPF = 1;
+    
+    
 
     return 0;
 }
@@ -293,6 +321,8 @@ static void __exit sBPF_exit(void)
 	*/
 	
     printk(KERN_ALERT" module has exitedi!\n");
+    
+    kfree((void *)u_mem);
 }
 
 // 模块初始化宏，用于加载该模块
