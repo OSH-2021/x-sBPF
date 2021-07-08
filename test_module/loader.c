@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
     if(pid1 == 0){
         kill(getpid(), SIGSTOP);        //blocking 
         
-        execv(argv[3], argv + 3);
+        execvp(argv[3], argv + 3);
     }
     
 
