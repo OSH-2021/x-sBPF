@@ -2,46 +2,49 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-//argv[1] path2program  argv[2] path2kmod.ko    argv[3] sandbox_path
+//  argv[1] path2kmod.ko    argv[2] sandbox_path    argv[3] path2program
 int main(int argc, char *argv[]){
-    pid_t pid = fork();
+    pid_t pid1 = fork();
     //child process to sandboxed_program
-    if(pid == 0){
-        //blocking  
-        puts("press enter to start running:");
-        getchar();  
-
-        execl(argv[1], argv[1], NULL);
+    if(pid1 == 0){
+        kill(getpid(), SIGSTOP);        //blocking 
+        
+        execv(argv[3], argv + 3);
     }
     
 
     //insmod
         //pid
     char arg_pid[20];
-    sprintf(arg_pid, "pid=%d", pid);
+    sprintf(arg_pid, "pid=%d", pid1);
         //u_mem
     char arg_u_mem[50];
     char test_space[1024];
     sprintf(arg_u_mem, "u_mem=%lu", (unsigned long)test_space);
         //sdir
     char arg_sdir[50];
-    sprintf(arg_sdir, "sdir=%s", argv[3]);
+    sprintf(arg_sdir, "sdir=%s", argv[2]);
         //insmod
-    if(fork()==0){
-        execl("/sbin/insmod", "insmod", argv[2], arg_pid, arg_u_mem, arg_sdir, NULL);
+    pid_t pid2 = fork();
+    if(pid2 == 0){
+        execl("/sbin/insmod", "insmod", argv[1], arg_pid, arg_u_mem, arg_sdir, NULL);
     }
+    waitpid(pid2, NULL, 0);
+    
+    kill(pid1, SIGCONT);        //restarting pid1
 
-    waitpid(pid, NULL, 0);
+    waitpid(pid1, NULL, 0);
+
 
     //rmmod
-    argv[2][strlen(argv[2])-3] = '\0';
-    execl("/sbin/rmmod", "rmmod", argv[2], NULL);
+    argv[1][strlen(argv[1])-3] = '\0';
+    execl("/sbin/rmmod", "rmmod", argv[1], NULL);
 
-    //cgroup
 
 }
