@@ -4,38 +4,52 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-main()
+
+int main()
 {
-    
-   char test_space[1024];
-   
-     
     
     char buffer[1024];
     FILE * fp;
-
-    
-    
-    printf("swap_space %lu\n",(unsigned long)test_space);
-    printf("这个程序的PID为: %d\n", getpid());
-    getchar();  
     
     fp = fopen ("./../file.txt", "w");
-    fprintf(fp, "%s\n", "test_message_11111");
+    if (fp != NULL) {
+    	fprintf(fp, "%s\n", "test_message_11111");
+    } else {
+    	printf("1: NULL!\n");
+    }
+    
     fclose(fp);
     
     fp = fopen ("./../file.txt", "r");
-    fscanf(fp,"%s",buffer);
-    printf("%s\n",buffer);
+    if (fp != NULL) {
+    	fscanf(fp,"%s",buffer);
+    	printf("%s\n",buffer);
+    } else {
+    	printf("2: NULL!\n");
+    }
+    
+    
     fclose(fp);
     
     fp = fopen ("./../file.txt", "w");
-    fprintf(fp, "%s\n", "test_message_222222");
+    if (fp != NULL) {
+    	fprintf(fp, "%s\n", "test_message_222222");
+    } else {
+    	printf("3: NULL!\n");
+    }
+    
     fclose(fp);
     
     fp = fopen ("./../file.txt", "r");
-    fscanf(fp,"%s",buffer);
-    printf("%s\n",buffer);
+    if (fp != NULL) {
+    	fscanf(fp,"%s",buffer);
+    	printf("%s\n",buffer);
+    } else {
+    	printf("4: NULL!\n");
+    }
+    
     fclose(fp);
+    
+    return 0;
 }
 
