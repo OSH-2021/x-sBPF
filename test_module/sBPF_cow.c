@@ -192,13 +192,31 @@ static const char* sBPF_sandbox_process(const char* filename,int flag){
 						my_mkdir(newpath,0777);
 					}
 				}
-				struct file * fptr1=filp_open(input_str,O_RDONLY,0644);
-				struct file * fptr2=filp_open(targetdir,O_RDWR|O_CREAT,0644);
+				struct file * fptr1=filp_open(input_str,O_RDONLY,0777);
+				struct file * fptr2=filp_open(targetdir,O_RDWR|O_CREAT,0777);
 				if(IS_ERR(fptr1)){
 					printk("openat: file not exist!");
+					printk("fptr1 err: %ld\n", PTR_ERR(fptr1));
 				}else{
 					vfs_copy_file_range(fptr1,0,fptr2,0,1024,0);
-				}	
+				}
+				if(IS_ERR(fptr2)){
+					printk("fptr2 err: %ld\n", PTR_ERR(fptr2));
+				}
+				
+				if (!IS_ERR(fptr1)) {
+					i = filp_close(fptr1, NULL);
+					if (i != 0) {
+						printk("fptr1 close err: %d\n", i);
+					}
+				}
+				
+				if (!IS_ERR(fptr2)) {
+					i = filp_close(fptr2, NULL);
+					if (i != 0) {
+						printk("fptr2 close err: %d\n", i);
+					}
+				}
 			}else{
 				printk("hash hit!!\n");
 			}
@@ -249,10 +267,10 @@ static int __init sBPF_init(void)
     
     printk(KERN_ALERT" module init!\n");
     
+    hash_head.next=NULL;
     print_flag = 0;
     sBPF_hook_openat_prog = sBPF_sandbox_process;
     flag_openat_sBPF = 1;
-    hash_head.next=NULL;
 
     return 0;
 }
@@ -273,6 +291,7 @@ static void __exit sBPF_exit(void)
 		ptr1=ptr2;
 	}
 	*/
+	
     printk(KERN_ALERT" module has exitedi!\n");
 }
 
