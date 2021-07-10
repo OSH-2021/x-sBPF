@@ -46,5 +46,5 @@ int main(int argc, char *argv[]){
     argv[1][strlen(argv[1])-3] = '\0';
     execl("/usr/bin/sudo", "sudo", "rmmod", argv[1], NULL);
 
-
+    return 0;
 }

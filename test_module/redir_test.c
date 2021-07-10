@@ -4,7 +4,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-main()
+
+int main()
 {
     
    char test_space[1024];
@@ -37,5 +38,7 @@ main()
     fscanf(fp,"%s",buffer);
     printf("%s\n",buffer);
     fclose(fp);
+
+    return 0;
 }
 

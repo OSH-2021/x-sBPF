@@ -3,7 +3,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-main()
+
+int main()
 {
 	char test_space[1024];
 	printf("swap_space %lu\n",(unsigned long)test_space);
@@ -16,10 +17,7 @@ main()
     write(fd, s, sizeof(s)-1);
     printf("%u\n",fd);
     close(fd);
-    //fd = open("~/coding/test3/test.txt", O_RDONLY);
-    //size = read(fd, buffer, sizeof(buffer));
-    //close(fd);
-    //printf("%s", buffer);
+    
     fd = open("/home/kk2048/coding/test_cow/test.txt", O_RDONLY);
     size = read(fd, buffer, sizeof(buffer));
     printf("%u\n",fd);
@@ -31,5 +29,7 @@ main()
     printf("%u\n",fd);
     close(fd);
     printf("%s\n", buffer);
+
+    return 0;
 }
 

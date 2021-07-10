@@ -1,0 +1,3 @@
+- `*_test.c`为运行在用户态的测试文件
+- `sBPF_*.c`为内核模块，需通过`make`编译。例如，如果要编译`sBPF_cow.c`，需将`Makefile`对应的`obj_m`后改为`sBPF_cow.o`，再使用`make`即可编译
+- `loader.c`为内核加载模块文件
