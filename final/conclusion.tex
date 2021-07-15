@@ -21,7 +21,7 @@
 \usepackage[left=1.25in,right=1.25in,top=1in,bottom=1in]{geometry}
 
 \renewcommand\lstlistingname{代码}
-% \setCJKmainfont{微软雅黑}[BoldFont=SimHei, ItalicFont=KaiTi]
+\setCJKmainfont{微软雅黑}[BoldFont=SimHei, ItalicFont=KaiTi]
 
 \pagestyle{fancy}
 
@@ -37,7 +37,7 @@
 \setsansfont[Ligatures=TeX]{CMU Sans Serif}
 \setmonofont[Mapping=]{CMU Typewriter Text}
 
-\setCJKmainfont{PingFangSC-Regular}[BoldFont=PingFangSC-Medium]
+% \setCJKmainfont{PingFangSC-Regular}[BoldFont=PingFangSC-Medium]
 
 \renewcommand{\headrulewidth}{0.1mm} 
 \renewcommand{\footrulewidth}{0.1mm}
@@ -567,9 +567,10 @@ loader是我们实现的一个简单的前端，自动化的完成调用目标�
 再在内核模块中按地址去修改值。这种方法虽然有用，但是明显非常麻烦。在我们发现用{\ttfamily EXPORT\_SYMBOL}能申明全局变量后，这种方法就被废弃掉了。
 
 编写内核程序还包括的一个困难点是内存管理。Linux内存被划分为用户空间和内核空间，我们遇到的一个很大的难题是：内核程序很难申请用户空间的内存。
-我们的程序有时需要使用到系统调用，虽然说内核程序找到系统调用的入口并不是很难——只需要找到相应的SYSCALL\_DEFINE，再调用相应实现的函数就可以了。
-但是部分系统调用只能传入用户空间的内存，而正如前面所说，内核程序想申请用户空间的内存并不是一件简单的事情。到最后，
-我们找到了一种方式勉强解决这个问题，不过并没有真正解决好。如果能真正解决这个问题，沙盒的运行效果会更好。
+我们的程序有时需要使用到系统调用，虽然说内核程序找到系统调用的入口并不是很难——只需要找到相应的{\ttfamily SYSCALL\_DEFINE}，再调用相应实现的函数就可以了。
+但是部分系统调用只能传入用户空间的内存，而正如前面所说，内核程序想申请用户空间的内存并不是一件简单的事情。
+期间，我们尝试过使用{\ttfamily brk}系统调用增大用户空间内存，但是{\ttfamily brk}在内核中的实现较为复杂，所以我们并未成功。
+到最后，我们找到了一种方式勉强解决这个问题，不过并没有真正解决好。如果能真正解决这个问题，沙盒的运行效果会更好。
 
 \section{功能演示与性能测试}
 \subsection{功能演示}
