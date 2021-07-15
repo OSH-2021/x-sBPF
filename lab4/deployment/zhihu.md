@@ -1,4 +1,3 @@
-# Ceph 部署说明文档
 
 ## 1.树莓派单节点部署
 ---
@@ -101,7 +100,6 @@ ceph-deploy mds create {hostname}
 # ceph -s
 # ceph osd tree
 ```
-![Alt text](./single_done.jpg)
 
 
 ---
@@ -232,10 +230,4 @@ ceph-deploy osd create --bluestore node2 --data /dev/mmcblk0p3
 # ceph osd tree
 ```
 
-
-![Alt text](./dist_done1.jpg)
-![Alt text](./dist_done2.jpg)
-
 ---
-## 3.上传至知乎
-[知乎链接](https://zhuanlan.zhihu.com/p/390133629)

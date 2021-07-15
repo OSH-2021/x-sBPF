@@ -1,32 +1,9 @@
-# 单节点性能测试
+# Ceph 性能测试和分析文档
+## 单节点性能测试
 - Ceph单节点状态：
-````
-root@raspberrypi:/home/pi/myceph# ceph -s
-  cluster:
-    id:     f8643fc7-e10c-4073-a985-14ce9259b5bf
-    health: HEALTH_OK
+![Alt text](../deployment/single_done.jpg)
 
-  services:
-    mon: 1 daemons, quorum raspberrypi
-    mgr: raspberrypi(active)
-    osd: 3 osds: 3 up, 3 in
 
-  data:
-    pools:   0 pools, 0 pgs
-    objects: 0 objects, 0B
-    usage:   3.00GiB used, 81.0GiB / 84.0GiB avail
-    pgs:
-````
-````
-root@raspberrypi:/home/pi/myceph# ceph osd tree
-ID CLASS WEIGHT  TYPE NAME            STATUS REWEIGHT PRI-AFF
--1       0.08189 root default
--3       0.08189     host raspberrypi
- 0   ssd 0.02730         osd.0            up  1.00000 1.00000
- 1   ssd 0.02730         osd.1            up  1.00000 1.00000
- 2   ssd 0.02730         osd.2            up  1.00000 1.00000
-
-````
 - 使用Ceph内置的Rados工具进行io测试。创建目录个数(pg_num)为128的名为teshbench的存储池：
 ````
 root@raspberrypi:/home/pi/myceph# ceph osd pool create testbench 128 128
@@ -106,3 +83,13 @@ root@raspberrypi:/home/pi/myceph# ceph-deploy --overwrite-conf admin raspberrypi
     - 优化配置，20秒的4M随机读取测试：
     ![after_rand](assets/after_rand.PNG)
     随机读取的速度和优化的顺序读取速度相当。更改配置对随机读取的优化最大。
+  ## 多节点性能测试
+  - 多节点状态
+  ![Alt text](../deployment/dist_done1.jpg)
+  ![Alt text](../deployment/dist_done2.jpg)
+  - 随机读取测试
+  ![after_rand](./dist_rand_read.jpg)
+  - 顺序读取测试
+  ![after_rand](./dist_seq_read.jpg)
+  - 写入测试
+  ![after_rand](./dist_write.jpg)
