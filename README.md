@@ -14,15 +14,16 @@
 - `BPF`: 存放一个可用于读取`openat`系统调用传入参数`filename`的`BPF`程序
 - `feasibility`: 可行性报告
 - `final`: 结题答辩+结题报告
+- `lab4`: 实验四仓库
 - `mid`: 中期报告PPT
 - `report`: 调研报告
 - `research`: 调研内容存放的文件夹
 - `test_module`: 内核模块、测试程序源代码、加载程序源代码存放文件夹
 
 ## LaTex文档的编译
-文档的编译需要用到`XeLaTex`，如果文档中使用了`BibTex`做文献引用，则需要使用`XeLaTex->BibTex->XeLaTex->XeLaTex`进行四遍编译。
+文档的编译需要用到`XeLaTeX`，如果文档中使用了`BibTeX`做文献引用，则需要使用`XeLaTeX->BibTeX->XeLaTeX->XeLaTeX`进行四遍编译。
 
-`beamer`类型可能需要使用`XeLaTex`进行两次以上的编译以校正页码等信息。
+`beamer`类型可能需要使用`XeLaTeX`进行两次以上的编译以校正页码等信息。
 
 ## 使用说明
 要正确运行这个项目，首先需要编译并更换Linux内核。本仓库的Linux修改源代码位于`OSH-2021/linux-stable`，从Linux`5.8.18`版本修改而来。
